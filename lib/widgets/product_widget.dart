@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../consts/app_colors.dart';
 
 class ProductWidget extends StatelessWidget {
-  final String imageAsset; // thumbnail
+  final String imageAsset; 
   final String title;
   final String subtitle;
   final String priceLabel;

@@ -47,7 +47,7 @@ class FilterButtonWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
 
-                  // PRICE RANGE
+                  
                   const _SectionTitle('Price range'),
                   const SizedBox(height: 8),
                   Row(
@@ -75,7 +75,7 @@ class FilterButtonWidget extends StatelessWidget {
 
                   const SizedBox(height: 10),
 
-                  // TOGGLES
+                  
                   const _SectionTitle('Features'),
                   const SizedBox(height: 6),
                   SwitchListTile(
@@ -113,7 +113,7 @@ class FilterButtonWidget extends StatelessWidget {
 
                   const SizedBox(height: 8),
 
-                  // ACTIONS
+                  
                   Row(
                     children: [
                       Expanded(

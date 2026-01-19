@@ -1,20 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/navigation_provider.dart';
 import 'home_screen.dart';
 import 'categories_screen.dart';
-import 'cart/cart_screen.dart';
+import 'cart_screen.dart';
 import 'profile_screen.dart';
 
-class RootScreen extends StatefulWidget {
+class RootScreen extends StatelessWidget {
   const RootScreen({super.key});
 
-  @override
-  State<RootScreen> createState() => _RootScreenState();
-}
-
-class _RootScreenState extends State<RootScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _pages = const [
+  static const List<Widget> _pages = [
     HomeScreen(),
     CategoriesScreen(),
     CartScreen(),
@@ -23,11 +19,13 @@ class _RootScreenState extends State<RootScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final nav = context.watch<NavigationProvider>();
+
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      body: IndexedStack(index: nav.index, children: _pages),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        currentIndex: nav.index,
+        onTap: (i) => context.read<NavigationProvider>().setIndex(i),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),

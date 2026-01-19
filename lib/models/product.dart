@@ -1,12 +1,12 @@
 class Product {
   final String id;
-  final String category; // Jackets, Gloves, Boots, Helmets
+  final String category; 
   final String title;
   final String subtitle;
-  final String priceLabel; // "€409,95"
-  final double priceValue; // 409.95 (kasnije za sort/filter)
-  final List<String> images; // 2 slike
-  final String coverImage; // za karticu u gridu
+  final String priceLabel; 
+  final double priceValue; 
+  final List<String> images; 
+  final String coverImage; 
 
   final bool techAirReady;
   final bool waterproof;

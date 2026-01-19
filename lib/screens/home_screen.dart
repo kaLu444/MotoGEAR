@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../consts/app_colors.dart';
 import '../services/assets_manager.dart';
 
+import '../providers/navigation_provider.dart';
+import '../providers/cart_provider.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-
-
-
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
+
+    // ✅ ovo uzima live broj iz CartProvider (menja se kad dodaješ/uklanjaš)
+    final cartCount = context.watch<CartProvider>().cartCount;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -23,15 +27,13 @@ class HomeScreen extends StatelessWidget {
               primary: primary,
               logoAsset: AssetsManager.alpinestarsLogo,
               heroAsset: AssetsManager.homeHero,
-              cartCount: 2,
-              onShopNow: () {
-                // later: navigate to Categories / Product list
+              cartCount: cartCount, // ✅ FIX
+              onShopNow: () {},
+              onCart: () {
+                context.read<NavigationProvider>().setIndex(2); // Cart tab
               },
-              onBell: () {},
-              onCart: () {},
             ),
 
-            // TAGLINE SECTION
             Container(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
               color: const Color(0xFF121214),
@@ -60,7 +62,6 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-            // QUICK CATEGORIES
             Container(
               color: const Color(0xFF0F0F10),
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -83,13 +84,14 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
+
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
               child: _TechAirExplainedCard(
                 imageAsset: AssetsManager.techAirExplained,
               ),
             ),
-            // PROMO TILES
+
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 18),
               child: Row(
@@ -127,7 +129,6 @@ class _HeroBanner extends StatelessWidget {
   final String heroAsset;
   final int cartCount;
   final VoidCallback onShopNow;
-  final VoidCallback onBell;
   final VoidCallback onCart;
 
   const _HeroBanner({
@@ -136,7 +137,6 @@ class _HeroBanner extends StatelessWidget {
     required this.heroAsset,
     required this.cartCount,
     required this.onShopNow,
-    required this.onBell,
     required this.onCart,
   });
 
@@ -147,14 +147,12 @@ class _HeroBanner extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Background image
           Image.asset(
             heroAsset,
             fit: BoxFit.cover,
             filterQuality: FilterQuality.high,
           ),
 
-          // Global gradient overlay for readability
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -169,34 +167,21 @@ class _HeroBanner extends StatelessWidget {
             ),
           ),
 
-          // Top bar with scrim (logo + icons)
           Positioned(
             top: -30,
             left: -20,
             right: 20,
             child: Row(
               children: [
-                // Bigger logo + shadow for contrast (no background tint)
                 SizedBox(
-                  height: 150, // <-- bigger
+                  height: 150,
                   child: Image.asset(
                     logoAsset,
                     fit: BoxFit.contain,
                     filterQuality: FilterQuality.high,
                   ),
                 ),
-
-                // Shadow/outline effect without darkening background:
-                // Wrap the image with a shadow using ShaderMask-like approach is overkill;
-                // easiest is to duplicate the image with a blur using Stack.
-                // We'll do it properly below with a small Stack:
                 const Spacer(),
-
-                _IconButtonCircle(
-                  icon: Icons.notifications_none_rounded,
-                  onTap: onBell,
-                ),
-                const SizedBox(width: 10),
                 _BadgeIconButton(
                   icon: Icons.shopping_cart_outlined,
                   badgeCount: cartCount,
@@ -206,7 +191,6 @@ class _HeroBanner extends StatelessWidget {
             ),
           ),
 
-          // Hero text + CTA
           Positioned(
             left: 16,
             right: 16,
@@ -452,12 +436,11 @@ class _PromoTile extends StatelessWidget {
     );
   }
 }
+
 class _TechAirExplainedCard extends StatelessWidget {
   final String imageAsset;
 
-  const _TechAirExplainedCard({
-    required this.imageAsset,
-  });
+  const _TechAirExplainedCard({required this.imageAsset});
 
   @override
   Widget build(BuildContext context) {
@@ -468,18 +451,15 @@ class _TechAirExplainedCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Image: keep subject on the LEFT, show empty space on the RIGHT
             Image.asset(
               imageAsset,
               fit: BoxFit.cover,
               alignment: Alignment.centerLeft,
               filterQuality: FilterQuality.high,
             ),
-
-            // Soft vignette so text is readable (only on the far right)
-            Positioned.fill(
+            const Positioned.fill(
               child: DecoratedBox(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
@@ -493,8 +473,6 @@ class _TechAirExplainedCard extends StatelessWidget {
                 ),
               ),
             ),
-
-            // Text block on the right side (uses empty space from your image)
             Positioned.fill(
               child: Padding(
                 padding: const EdgeInsets.all(14),

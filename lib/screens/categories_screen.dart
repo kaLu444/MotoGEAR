@@ -22,7 +22,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ProductsProvider>();
-    final products = provider.products; // <-- jednom izračunaj
+    final products = provider.products; 
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -95,7 +95,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     child: GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: products.length, // <-- koristi local listu
+                      itemCount: products.length, 
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
@@ -104,7 +104,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                             childAspectRatio: 0.75,
                           ),
                       itemBuilder: (context, index) {
-                        final p = products[index]; // <-- koristi local listu
+                        final p = products[index]; 
                         return ProductWidget(
                           imageAsset: p.coverImage,
                           title: p.title,

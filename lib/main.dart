@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:motogear/services/products_service.dart';
+import 'package:motogear/providers/navigation_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/theme_provider.dart';
 import 'providers/products_provider.dart';
+import 'providers/cart_provider.dart';
+
+import 'services/products_service.dart';
+import 'services/cart_service.dart';
 
 import 'screens/root_screen.dart';
 
@@ -11,10 +15,15 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => NavigationProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
 
         ChangeNotifierProvider(
           create: (_) => ProductsProvider(ProductsService())..loadProducts(),
+        ),
+
+        ChangeNotifierProvider(
+          create: (_) => CartProvider(CartService())..loadCart(),
         ),
       ],
       child: const MyApp(),
@@ -38,4 +47,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

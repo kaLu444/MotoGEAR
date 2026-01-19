@@ -1,14 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../consts/app_colors.dart';
 import '../models/product.dart';
+import '../providers/cart_provider.dart';
+import '../providers/navigation_provider.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final Product product;
 
+  
+  final String? editingCartItemId; 
+  final String? initialSize; 
+
   const ProductDetailsScreen({
     super.key,
     required this.product,
+    this.editingCartItemId,
+    this.initialSize,
   });
+
+  bool get isEditing => editingCartItemId != null;
 
   @override
   State<ProductDetailsScreen> createState() => _ProductDetailsScreenState();
@@ -16,30 +28,44 @@ class ProductDetailsScreen extends StatefulWidget {
 
 class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   int _pageIndex = 0;
-  int _selectedSizeIndex = 3; // XL default
+  int _selectedSizeIndex = 3; 
 
   final List<String> _sizes = const ['S', 'M', 'L', 'XL', 'XXL'];
 
   List<String> get _bullets => const [
-        'CE Tech-Air® Ready for advanced airbag system compatibility.',
-        'Made from premium full-grain leather.',
-        'Class-leading CE Level 2 shoulder and elbow protectors included.',
-        'Perforated panels for superior airflow.',
-      ];
+    'CE Tech-Air® Ready for advanced airbag system compatibility.',
+    'Made from premium full-grain leather.',
+    'Class-leading CE Level 2 shoulder and elbow protectors included.',
+    'Perforated panels for superior airflow.',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    
+    
+    final initSize = widget.initialSize;
+    if (initSize != null) {
+      final idx = _sizes.indexOf(initSize);
+      if (idx != -1) {
+        _selectedSizeIndex = idx;
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
 
-    // We expect exactly 2 images (front/back), but guard anyway
     final images = product.images.length >= 2
         ? product.images.take(2).toList()
         : product.images.isEmpty
-            ? <String>[]
-            : <String>[
-                ...product.images,
-                ...List.filled(2 - product.images.length, product.images.first),
-              ];
+        ? <String>[]
+        : <String>[
+            ...product.images,
+            ...List.filled(2 - product.images.length, product.images.first),
+          ];
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -137,6 +163,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 ),
               ],
             ),
+
             Positioned(
               left: 0,
               right: 0,
@@ -144,7 +171,24 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               child: _BottomBar(
                 price: product.priceLabel,
                 onWishlist: () {},
-                onAddToCart: () {},
+                onAddToCart: () {
+                  final selectedSize = _sizes[_selectedSizeIndex];
+                  final cartProv = context.read<CartProvider>();
+
+                  
+                  if (widget.isEditing) {
+                    cartProv.updateItemSize(
+                      cartItemId: widget.editingCartItemId!,
+                      newSize: selectedSize,
+                    );
+                  } else {
+                    cartProv.addToCart(product: product, size: selectedSize);
+                  }
+
+                  
+                  context.read<NavigationProvider>().setIndex(2);
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
               ),
             ),
           ],
@@ -153,6 +197,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 }
+
+
 
 class _TopImageFixed extends StatelessWidget {
   final List<String> images;
@@ -246,10 +292,7 @@ class _TopIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _TopIconButton({
-    required this.icon,
-    required this.onTap,
-  });
+  const _TopIconButton({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -275,11 +318,7 @@ class _Dots extends StatelessWidget {
   final int index;
   final ValueChanged<int> onTap;
 
-  const _Dots({
-    required this.count,
-    required this.index,
-    required this.onTap,
-  });
+  const _Dots({required this.count, required this.index, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -332,7 +371,9 @@ class _SizeChip extends StatelessWidget {
               : const Color(0xFF1A1A1E),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected ? AppColors.alpinestarsRed : const Color(0x22000000),
+            color: selected
+                ? AppColors.alpinestarsRed
+                : const Color(0x22000000),
           ),
         ),
         child: Text(
