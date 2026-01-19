@@ -1,11 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:motogear/services/products_service.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/theme_provider.dart';
+import 'providers/products_provider.dart';
+
 import 'screens/root_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+
+        ChangeNotifierProvider(
+          create: (_) => ProductsProvider(ProductsService())..loadProducts(),
+        ),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -13,20 +27,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-      ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, _) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'MotoGEAR - Alpinestars',
-            theme: themeProvider.themeData,
-            home: const RootScreen(),
-          );
-        },
-      ),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: themeProvider.themeData,
+          home: const RootScreen(),
+        );
+      },
     );
   }
 }
+

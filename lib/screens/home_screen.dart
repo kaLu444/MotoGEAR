@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import '../consts/app_colors.dart';
+import '../services/assets_manager.dart';
+
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  static const String _logoAsset = 'assets/images/alpinestars_logo.png';
-  static const String _heroAsset = 'assets/images/home_hero.png';
-  static const String _tileNewGearAsset = 'assets/images/tile_new_gear.png';
-  static const String _tileBootsAsset = 'assets/images/tile_boots.png';
-  static const String _techAirAsset = 'assets/images/tech_air_explained.png';
+
 
 
   @override
@@ -23,8 +21,8 @@ class HomeScreen extends StatelessWidget {
           children: [
             _HeroBanner(
               primary: primary,
-              logoAsset: _logoAsset,
-              heroAsset: _heroAsset,
+              logoAsset: AssetsManager.alpinestarsLogo,
+              heroAsset: AssetsManager.homeHero,
               cartCount: 2,
               onShopNow: () {
                 // later: navigate to Categories / Product list
@@ -88,7 +86,7 @@ class HomeScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
               child: _TechAirExplainedCard(
-                imageAsset: _techAirAsset,
+                imageAsset: AssetsManager.techAirExplained,
               ),
             ),
             // PROMO TILES
@@ -99,7 +97,7 @@ class HomeScreen extends StatelessWidget {
                   Expanded(
                     child: _PromoTile(
                       titleTop: 'NEW GEAR',
-                      imageAsset: _tileNewGearAsset,
+                      imageAsset: AssetsManager.tileNewGear,
                       ctaText: 'DISCOVER',
                       onTap: () {},
                     ),
@@ -108,7 +106,7 @@ class HomeScreen extends StatelessWidget {
                   Expanded(
                     child: _PromoTile(
                       titleTop: 'RIDING BOOTS',
-                      imageAsset: _tileBootsAsset,
+                      imageAsset: AssetsManager.tileBoots,
                       ctaText: 'SHOP NOW',
                       onTap: () {},
                     ),
