@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "22088865381",
+    "project_id": "alpinestars-fa28a",
+    "storage_bucket": "alpinestars-fa28a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:22088865381:android:55be318c2d2a5f1df7588c",
+        "android_client_info": {
+          "package_name": "com.example.motogear"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5Cl2mBjofz8I_Kc5VNmpeztVh-Uqlezk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+import 'firebase_options.dart';
 
 import 'providers/theme_provider.dart';
 import 'providers/products_provider.dart';
@@ -13,21 +16,23 @@ import 'services/auth_service.dart';
 
 import 'screens/root_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-
         ChangeNotifierProvider(
           create: (_) => ProductsProvider(ProductsService())..loadProducts(),
         ),
-
         ChangeNotifierProvider(
           create: (_) => CartProvider(CartService())..loadCart(),
         ),
-
         ChangeNotifierProvider(
           create: (_) => AuthProvider(AuthService())..loadSession(),
         ),

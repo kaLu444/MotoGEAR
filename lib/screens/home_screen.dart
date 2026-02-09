@@ -13,8 +13,6 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
-
-    // ✅ ovo uzima live broj iz CartProvider (menja se kad dodaješ/uklanjaš)
     final cartCount = context.watch<CartProvider>().cartCount;
 
     return Scaffold(
@@ -27,10 +25,10 @@ class HomeScreen extends StatelessWidget {
               primary: primary,
               logoAsset: AssetsManager.alpinestarsLogo,
               heroAsset: AssetsManager.homeHero,
-              cartCount: cartCount, // ✅ FIX
+              cartCount: cartCount, 
               onShopNow: () {},
               onCart: () {
-                context.read<NavigationProvider>().setIndex(2); // Cart tab
+                context.read<NavigationProvider>().setIndex(2); 
               },
             ),
 
