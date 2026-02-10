@@ -9,10 +9,12 @@ import 'providers/products_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/navigation_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/wishlist_provider.dart';
 
 import 'services/products_service.dart';
 import 'services/cart_service.dart';
 import 'services/auth_service.dart';
+import 'services/wishlist_service.dart';
 
 import 'screens/root_screen.dart';
 
@@ -35,6 +37,16 @@ Future<void> main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(AuthService())..loadSession(),
+        ),
+
+        // ✅ Wishlist prati auth (uid)
+        ChangeNotifierProxyProvider<AuthProvider, WishlistProvider>(
+          create: (_) => WishlistProvider(WishlistService()),
+          update: (_, auth, wish) {
+            wish ??= WishlistProvider(WishlistService());
+            wish.updateAuth(auth);
+            return wish;
+          },
         ),
       ],
       child: const MyApp(),

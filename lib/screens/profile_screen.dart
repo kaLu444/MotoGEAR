@@ -1,12 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:motogear/screens/edit_profile_screen.dart';
 import 'package:provider/provider.dart';
+import 'wishlist_screen.dart';
 
 import '../consts/app_colors.dart';
 import '../providers/auth_provider.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<AuthProvider>().clearError();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,19 +49,49 @@ class ProfileScreen extends StatelessWidget {
               const Center(child: CircularProgressIndicator()),
             ] else if (!auth.isLoggedIn) ...[
               _AuthGateCard(
-                errorText: auth.error,
-                onLogin: () => Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (_) => const LoginScreen())),
-                onRegister: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                ),
+                onLogin: () async {
+                  context.read<AuthProvider>().clearError();
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                  if (!mounted) return;
+                  context.read<AuthProvider>().clearError();
+                },
+                onRegister: () async {
+                  context.read<AuthProvider>().clearError();
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                  );
+                  if (!mounted) return;
+                  context.read<AuthProvider>().clearError();
+                },
               ),
             ] else ...[
               _ProfileHeaderCard(
                 name: auth.user!.name,
                 email: auth.user!.email,
-                onEditProfile: () {},
+                onEditProfile: () async {
+                  // ✅ prosleđujemo stvarne vrednosti (nema više “Your name” hardkoda)
+                  final msg = await Navigator.of(context).push<String>(
+                    MaterialPageRoute(
+                      builder: (_) => EditProfileScreen(
+                        initialName: auth.user!.name,
+                        initialEmail: auth.user!.email,
+                      ),
+                    ),
+                  );
+
+                  if (!mounted) return;
+
+                  // očisti error da se ne prenosi
+                  context.read<AuthProvider>().clearError();
+
+                  if (msg != null && msg.trim().isNotEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(msg)),
+                    );
+                  }
+                },
               ),
               const SizedBox(height: 16),
 
@@ -57,17 +102,27 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
 
+              // ✅ Wishlist sada vodi na WishlistScreen
               _MenuTile(
                 icon: Icons.favorite_border_rounded,
                 label: 'Wishlist',
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const WishlistScreen()),
+                  );
+                },
               ),
               const SizedBox(height: 12),
 
+              // ✅ Addresses više ne vodi na wishlist (placeholder)
               _MenuTile(
                 icon: Icons.location_on_outlined,
                 label: 'Addresses',
-                onTap: () {},
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Addresses: coming soon.')),
+                  );
+                },
               ),
 
               const SizedBox(height: 18),
@@ -100,13 +155,8 @@ class ProfileScreen extends StatelessWidget {
 class _AuthGateCard extends StatelessWidget {
   final VoidCallback onLogin;
   final VoidCallback onRegister;
-  final String? errorText;
 
-  const _AuthGateCard({
-    required this.onLogin,
-    required this.onRegister,
-    this.errorText,
-  });
+  const _AuthGateCard({required this.onLogin, required this.onRegister});
 
   @override
   Widget build(BuildContext context) {
@@ -137,16 +187,6 @@ class _AuthGateCard extends StatelessWidget {
               height: 1.35,
             ),
           ),
-          if (errorText != null) ...[
-            const SizedBox(height: 10),
-            Text(
-              errorText!,
-              style: const TextStyle(
-                color: Colors.redAccent,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
           const SizedBox(height: 14),
           Row(
             children: [
@@ -263,16 +303,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const EditProfileScreen(
-                            initialName: 'Your name',
-                            initialEmail: 'your@email.com',
-                          ),
-                        ),
-                      );
-                    },
+                    onPressed: onEditProfile,
                     child: const Text(
                       'Edit Profile',
                       style: TextStyle(fontWeight: FontWeight.w900),
@@ -362,8 +393,17 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _email = TextEditingController(text: 'marko.nikolic@email.com');
-  final _pass = TextEditingController(text: '123456');
+  final _email = TextEditingController();
+  final _pass = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<AuthProvider>().clearError();
+    });
+  }
 
   @override
   void dispose() {
@@ -372,64 +412,80 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<bool> _onWillPop() async {
+    context.read<AuthProvider>().clearError();
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
         backgroundColor: AppColors.background,
-        foregroundColor: Colors.white,
-        title: const Text('Log in'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _Field(label: 'Email', controller: _email),
-            const SizedBox(height: 12),
-            _Field(label: 'Password', controller: _pass, obscure: true),
-            if (auth.error != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                auth.error!,
-                style: const TextStyle(
-                  color: Colors.redAccent,
-                  fontWeight: FontWeight.w800,
+        appBar: AppBar(
+          backgroundColor: AppColors.background,
+          foregroundColor: Colors.white,
+          title: const Text('Log in'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () {
+              context.read<AuthProvider>().clearError();
+              Navigator.pop(context);
+            },
+          ),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _Field(label: 'Email', controller: _email),
+              const SizedBox(height: 12),
+              _Field(label: 'Password', controller: _pass, obscure: true),
+              if (auth.error != null) ...[
+                const SizedBox(height: 12),
+                _ErrorBanner(
+                  message: auth.error!,
+                  onDismiss: () => context.read<AuthProvider>().clearError(),
+                ),
+              ],
+              const SizedBox(height: 14),
+              SizedBox(
+                height: 48,
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.alpinestarsRed,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: auth.loading
+                      ? null
+                      : () async {
+                          await context.read<AuthProvider>().login(
+                                email: _email.text.trim(),
+                                password: _pass.text,
+                              );
+
+                          if (!mounted) return;
+
+                          if (context.read<AuthProvider>().isLoggedIn) {
+                            context.read<AuthProvider>().clearError();
+                            Navigator.pop(context);
+                          }
+                        },
+                  child: Text(
+                    auth.loading ? 'Loading...' : 'Continue',
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
                 ),
               ),
             ],
-            const SizedBox(height: 14),
-            SizedBox(
-              height: 48,
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.alpinestarsRed,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed: auth.loading
-                    ? null
-                    : () async {
-                        await context.read<AuthProvider>().login(
-                          email: _email.text.trim(),
-                          password: _pass.text,
-                        );
-                        if (context.read<AuthProvider>().isLoggedIn) {
-                          Navigator.pop(context);
-                        }
-                      },
-                child: Text(
-                  auth.loading ? 'Loading...' : 'Continue',
-                  style: const TextStyle(fontWeight: FontWeight.w900),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -444,9 +500,18 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _name = TextEditingController(text: 'Marko Nikolic');
+  final _name = TextEditingController();
   final _email = TextEditingController();
-  final _pass = TextEditingController(text: '123456');
+  final _pass = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<AuthProvider>().clearError();
+    });
+  }
 
   @override
   void dispose() {
@@ -456,67 +521,83 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  Future<bool> _onWillPop() async {
+    context.read<AuthProvider>().clearError();
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
         backgroundColor: AppColors.background,
-        foregroundColor: Colors.white,
-        title: const Text('Register'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _Field(label: 'Name', controller: _name),
-            const SizedBox(height: 12),
-            _Field(label: 'Email', controller: _email),
-            const SizedBox(height: 12),
-            _Field(label: 'Password', controller: _pass, obscure: true),
-            if (auth.error != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                auth.error!,
-                style: const TextStyle(
-                  color: Colors.redAccent,
-                  fontWeight: FontWeight.w800,
+        appBar: AppBar(
+          backgroundColor: AppColors.background,
+          foregroundColor: Colors.white,
+          title: const Text('Register'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () {
+              context.read<AuthProvider>().clearError();
+              Navigator.pop(context);
+            },
+          ),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _Field(label: 'Name', controller: _name),
+              const SizedBox(height: 12),
+              _Field(label: 'Email', controller: _email),
+              const SizedBox(height: 12),
+              _Field(label: 'Password', controller: _pass, obscure: true),
+              if (auth.error != null) ...[
+                const SizedBox(height: 12),
+                _ErrorBanner(
+                  message: auth.error!,
+                  onDismiss: () => context.read<AuthProvider>().clearError(),
+                ),
+              ],
+              const SizedBox(height: 14),
+              SizedBox(
+                height: 48,
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.alpinestarsRed,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: auth.loading
+                      ? null
+                      : () async {
+                          await context.read<AuthProvider>().register(
+                                name: _name.text.trim(),
+                                email: _email.text.trim(),
+                                password: _pass.text,
+                              );
+
+                          if (!mounted) return;
+
+                          if (context.read<AuthProvider>().isLoggedIn) {
+                            context.read<AuthProvider>().clearError();
+                            Navigator.pop(context);
+                          }
+                        },
+                  child: Text(
+                    auth.loading ? 'Loading...' : 'Create account',
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
                 ),
               ),
             ],
-            const SizedBox(height: 14),
-            SizedBox(
-              height: 48,
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.alpinestarsRed,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed: auth.loading
-                    ? null
-                    : () async {
-                        await context.read<AuthProvider>().register(
-                          name: _name.text.trim(),
-                          email: _email.text.trim(),
-                          password: _pass.text,
-                        );
-                        if (context.read<AuthProvider>().isLoggedIn) {
-                          Navigator.pop(context);
-                        }
-                      },
-                child: Text(
-                  auth.loading ? 'Loading...' : 'Create account',
-                  style: const TextStyle(fontWeight: FontWeight.w900),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -549,6 +630,52 @@ class _Field extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
         ),
+      ),
+    );
+  }
+}
+
+class _ErrorBanner extends StatelessWidget {
+  final String message;
+  final VoidCallback onDismiss;
+
+  const _ErrorBanner({required this.message, required this.onDismiss});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2A0F12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0x55FF3B30)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.error_outline_rounded, color: Colors.redAccent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.w800,
+                height: 1.25,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          InkWell(
+            borderRadius: BorderRadius.circular(999),
+            onTap: onDismiss,
+            child: const Padding(
+              padding: EdgeInsets.all(4),
+              child: Icon(Icons.close_rounded, color: Colors.white70, size: 18),
+            ),
+          ),
+        ],
       ),
     );
   }

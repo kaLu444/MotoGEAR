@@ -40,9 +40,7 @@ class CartProvider extends ChangeNotifier {
     }
   }
 
-  
   void addToCart({required Product product, required String size}) {
-    
     final idx = _items.indexWhere(
       (x) => x.product.id == product.id && x.size == size,
     );
@@ -64,19 +62,14 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  
-  
-  
   void updateItemSize({required String cartItemId, required String newSize}) {
     final idx = _items.indexWhere((x) => x.id == cartItemId);
     if (idx == -1) return;
 
     final current = _items[idx];
 
-    
     if (current.size == newSize) return;
 
-    
     final mergeIdx = _items.indexWhere(
       (x) =>
           x.id != cartItemId &&
@@ -85,14 +78,10 @@ class CartProvider extends ChangeNotifier {
     );
 
     if (mergeIdx != -1) {
-      
       final mergedQty = _items[mergeIdx].quantity + current.quantity;
       _items[mergeIdx] = _items[mergeIdx].copyWith(quantity: mergedQty);
-
-      
       _items.removeAt(idx);
     } else {
-      
       _items[idx] = current.copyWith(size: newSize);
     }
 

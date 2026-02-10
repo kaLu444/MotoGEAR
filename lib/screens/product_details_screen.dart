@@ -5,13 +5,14 @@ import '../consts/app_colors.dart';
 import '../models/product.dart';
 import '../providers/cart_provider.dart';
 import '../providers/navigation_provider.dart';
+import '../providers/wishlist_provider.dart';
+import '../providers/auth_provider.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final Product product;
 
-  
-  final String? editingCartItemId; 
-  final String? initialSize; 
+  final String? editingCartItemId;
+  final String? initialSize;
 
   const ProductDetailsScreen({
     super.key,
@@ -28,44 +29,69 @@ class ProductDetailsScreen extends StatefulWidget {
 
 class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   int _pageIndex = 0;
-  int _selectedSizeIndex = 3; 
+  late int _selectedSizeIndex;
 
-  final List<String> _sizes = const ['S', 'M', 'L', 'XL', 'XXL'];
+  static const List<String> _fallbackSizes = ['S', 'M', 'L', 'XL', 'XXL'];
 
-  List<String> get _bullets => const [
+  static const List<String> _fallbackBullets = [
     'CE Tech-Air® Ready for advanced airbag system compatibility.',
     'Made from premium full-grain leather.',
     'Class-leading CE Level 2 shoulder and elbow protectors included.',
     'Perforated panels for superior airflow.',
   ];
 
+  List<String> get _sizes =>
+      widget.product.sizes.isNotEmpty ? widget.product.sizes : _fallbackSizes;
+
+  List<String> get _bullets => widget.product.bullets.isNotEmpty
+      ? widget.product.bullets
+      : _fallbackBullets;
+
   @override
   void initState() {
     super.initState();
 
-    
-    
+    final sizes = _sizes;
+    _selectedSizeIndex = sizes.length > 3 ? 3 : 0;
+
     final initSize = widget.initialSize;
     if (initSize != null) {
-      final idx = _sizes.indexOf(initSize);
-      if (idx != -1) {
-        _selectedSizeIndex = idx;
-      }
+      final idx = sizes.indexOf(initSize);
+      if (idx != -1) _selectedSizeIndex = idx;
     }
+  }
+
+  void _toast(BuildContext context, String msg) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFF17171A),
+        content: Text(
+          msg,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
 
+    final isWishlisted = context.select<WishlistProvider, bool>(
+      (w) => w.isWishlisted(product.id),
+    );
+
     final images = product.images.length >= 2
         ? product.images.take(2).toList()
         : product.images.isEmpty
-        ? <String>[]
-        : <String>[
-            ...product.images,
-            ...List.filled(2 - product.images.length, product.images.first),
-          ];
+            ? <String>[]
+            : <String>[
+                ...product.images,
+                ...List.filled(2 - product.images.length, product.images.first),
+              ];
+
+    final sizes = _sizes;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -106,6 +132,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         ),
                       ),
                       const SizedBox(height: 18),
+
                       ..._bullets.map(
                         (b) => Padding(
                           padding: const EdgeInsets.only(bottom: 10),
@@ -136,6 +163,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           ),
                         ),
                       ),
+
                       const SizedBox(height: 18),
                       const Text(
                         'Select Size',
@@ -146,13 +174,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         ),
                       ),
                       const SizedBox(height: 10),
+
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,
-                        children: List.generate(_sizes.length, (i) {
+                        children: List.generate(sizes.length, (i) {
                           final selected = i == _selectedSizeIndex;
                           return _SizeChip(
-                            label: _sizes[i],
+                            label: sizes[i],
                             selected: selected,
                             onTap: () => setState(() => _selectedSizeIndex = i),
                           );
@@ -170,12 +199,27 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               bottom: 0,
               child: _BottomBar(
                 price: product.priceLabel,
-                onWishlist: () {},
+                isWishlisted: isWishlisted,
+                onToggleWishlist: () async {
+                  final auth = context.read<AuthProvider>();
+                  if (!auth.isLoggedIn) {
+                    _toast(context, 'Uloguj se da bi koristio wishlist.');
+                    return;
+                  }
+
+                  await context.read<WishlistProvider>().toggle(product.id);
+                },
                 onAddToCart: () {
-                  final selectedSize = _sizes[_selectedSizeIndex];
+                  final sizesNow = _sizes;
+                  final safeIndex = _selectedSizeIndex.clamp(
+                    0,
+                    (sizesNow.isEmpty ? 0 : sizesNow.length - 1),
+                  );
+                  final selectedSize =
+                      sizesNow.isEmpty ? 'One Size' : sizesNow[safeIndex];
+
                   final cartProv = context.read<CartProvider>();
 
-                  
                   if (widget.isEditing) {
                     cartProv.updateItemSize(
                       cartItemId: widget.editingCartItemId!,
@@ -185,7 +229,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     cartProv.addToCart(product: product, size: selectedSize);
                   }
 
-                  
                   context.read<NavigationProvider>().setIndex(2);
                   Navigator.of(context).popUntil((route) => route.isFirst);
                 },
@@ -197,8 +240,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 }
-
-
 
 class _TopImageFixed extends StatelessWidget {
   final List<String> images;
@@ -215,8 +256,13 @@ class _TopImageFixed extends StatelessWidget {
     required this.onShare,
   });
 
+  bool _isNetwork(String s) =>
+      s.startsWith('http://') || s.startsWith('https://');
+
   @override
   Widget build(BuildContext context) {
+    final idx = pageIndex.clamp(0, images.length - 1);
+
     return SizedBox(
       height: 420,
       child: Stack(
@@ -225,12 +271,37 @@ class _TopImageFixed extends StatelessWidget {
           if (images.isNotEmpty)
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 220),
-              child: Image.asset(
-                images[pageIndex.clamp(0, images.length - 1)],
-                key: ValueKey(pageIndex),
-                fit: BoxFit.cover,
-                filterQuality: FilterQuality.high,
-              ),
+              child: _isNetwork(images[idx])
+                  ? Image.network(
+                      images[idx],
+                      key: ValueKey(idx),
+                      fit: BoxFit.cover,
+                      filterQuality: FilterQuality.high,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: const Color(0xFF17171A),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.image_not_supported_outlined,
+                          color: AppColors.textMuted,
+                          size: 40,
+                        ),
+                      ),
+                    )
+                  : Image.asset(
+                      images[idx],
+                      key: ValueKey(idx),
+                      fit: BoxFit.cover,
+                      filterQuality: FilterQuality.high,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: const Color(0xFF17171A),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.image_not_supported_outlined,
+                          color: AppColors.textMuted,
+                          size: 40,
+                        ),
+                      ),
+                    ),
             )
           else
             Container(
@@ -278,7 +349,7 @@ class _TopImageFixed extends StatelessWidget {
               right: 0,
               child: _Dots(
                 count: images.length,
-                index: pageIndex.clamp(0, images.length - 1),
+                index: idx,
                 onTap: onDotTap,
               ),
             ),
@@ -371,9 +442,7 @@ class _SizeChip extends StatelessWidget {
               : const Color(0xFF1A1A1E),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected
-                ? AppColors.alpinestarsRed
-                : const Color(0x22000000),
+            color: selected ? AppColors.alpinestarsRed : const Color(0x22000000),
           ),
         ),
         child: Text(
@@ -389,19 +458,35 @@ class _SizeChip extends StatelessWidget {
   }
 }
 
+/// ✅ OVO JE `_BottomBar` — ovde je wishlist dugme
 class _BottomBar extends StatelessWidget {
   final String price;
-  final VoidCallback onWishlist;
+  final bool isWishlisted;
+  final VoidCallback onToggleWishlist;
   final VoidCallback onAddToCart;
 
   const _BottomBar({
     required this.price,
-    required this.onWishlist,
+    required this.isWishlisted,
+    required this.onToggleWishlist,
     required this.onAddToCart,
   });
 
   @override
   Widget build(BuildContext context) {
+    final wishBg = isWishlisted
+        ? AppColors.alpinestarsRed.withOpacity(0.18)
+        : const Color(0xFF151518);
+
+    final wishBorder = isWishlisted
+        ? AppColors.alpinestarsRed.withOpacity(0.65)
+        : const Color(0x33FFFFFF);
+
+    final wishIcon =
+        isWishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded;
+
+    final wishText = isWishlisted ? 'Wishlisted' : 'Add to Wishlist';
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: const BoxDecoration(
@@ -432,18 +517,18 @@ class _BottomBar extends StatelessWidget {
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
-                      side: const BorderSide(color: Color(0x33FFFFFF)),
-                      backgroundColor: const Color(0xFF151518),
+                      side: BorderSide(color: wishBorder),
+                      backgroundColor: wishBg,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    onPressed: onWishlist,
-                    icon: const Icon(Icons.favorite_border_rounded),
-                    label: const Text(
-                      'Add to Wishlist',
-                      style: TextStyle(fontWeight: FontWeight.w900),
+                    onPressed: onToggleWishlist,
+                    icon: Icon(wishIcon, color: Colors.white),
+                    label: Text(
+                      wishText,
+                      style: const TextStyle(fontWeight: FontWeight.w900),
                     ),
                   ),
                 ),

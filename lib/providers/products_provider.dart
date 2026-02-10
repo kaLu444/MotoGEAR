@@ -32,6 +32,18 @@ class ProductsProvider extends ChangeNotifier {
   bool get techAirReady => _techAirReady;
   bool get waterproof => _waterproof;
 
+  // ✅ za wishlist (nefiltrirano)
+  List<Product> get allProducts => List.unmodifiable(_all);
+
+  // ✅ helper
+  Product? getById(String id) {
+    try {
+      return _all.firstWhere((p) => p.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
   List<String> get tabs {
     final set = <String>{};
     for (final p in _all) {
@@ -105,25 +117,17 @@ class ProductsProvider extends ChangeNotifier {
     switch (_sort) {
       case SortOption.featured:
         break;
-
       case SortOption.priceLowHigh:
         list.sort((a, b) => a.priceValue.compareTo(b.priceValue));
         break;
-
       case SortOption.priceHighLow:
         list.sort((a, b) => b.priceValue.compareTo(a.priceValue));
         break;
-
       case SortOption.nameAZ:
-        list.sort(
-          (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
-        );
+        list.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
         break;
-
       case SortOption.nameZA:
-        list.sort(
-          (a, b) => b.title.toLowerCase().compareTo(a.title.toLowerCase()),
-        );
+        list.sort((a, b) => b.title.toLowerCase().compareTo(a.title.toLowerCase()));
         break;
     }
 

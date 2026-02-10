@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../consts/app_colors.dart';
+import '../providers/auth_provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final String initialName;
   final String initialEmail;
-
   final String? initialPhoto;
 
   const EditProfileScreen({
@@ -22,11 +23,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _emailCtrl;
 
+  String _startEmail = '';
+
   @override
   void initState() {
     super.initState();
-    _nameCtrl = TextEditingController(text: widget.initialName);
-    _emailCtrl = TextEditingController(text: widget.initialEmail);
+
+    // ✅ Povuci trenutno ulogovanog korisnika
+    final auth = context.read<AuthProvider>();
+    final u = auth.user;
+
+    final name = (u?.name ?? widget.initialName).trim();
+    final email = (u?.email ?? widget.initialEmail).trim();
+
+    _startEmail = email;
+
+    _nameCtrl = TextEditingController(text: name);
+    _emailCtrl = TextEditingController(text: email);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<AuthProvider>().clearError();
+    });
   }
 
   @override
@@ -36,10 +54,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  void _onCancel() => Navigator.pop(context);
-
-  void _onSave() {
+  void _onCancel() {
+    context.read<AuthProvider>().clearError();
     Navigator.pop(context);
+  }
+
+  Future<void> _onSave() async {
+    final auth = context.read<AuthProvider>();
+
+    final name = _nameCtrl.text.trim();
+    final email = _emailCtrl.text.trim();
+
+    await auth.updateProfile(fullName: name, email: email);
+
+    if (!mounted) return;
+
+    if (auth.error == null) {
+      final emailChanged = email.isNotEmpty && email != _startEmail;
+
+      // Ako je promenjen email -> verifyBeforeUpdateEmail šalje verifikacioni email
+      Navigator.pop(
+        context,
+        emailChanged
+            ? 'We sent a verification mail.'
+            : 'Profile saved.',
+      );
+    }
   }
 
   void _openChangePhotoSheet() {
@@ -65,7 +105,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-
               _SheetAction(
                 icon: Icons.photo_library_outlined,
                 label: 'Choose from gallery',
@@ -84,9 +123,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 danger: true,
                 onTap: () => Navigator.pop(context),
               ),
-
               const SizedBox(height: 12),
-
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
@@ -114,6 +151,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -121,6 +160,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: const Text('Edit Profile'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () {
+            context.read<AuthProvider>().clearError();
+            Navigator.pop(context);
+          },
+        ),
       ),
       body: SafeArea(
         child: Padding(
@@ -170,7 +216,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 18),
 
               _Field(label: 'Full Name', controller: _nameCtrl),
@@ -180,6 +225,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
               ),
+
+              if (auth.error != null) ...[
+                const SizedBox(height: 12),
+                _ErrorBanner(
+                  message: auth.error!,
+                  onDismiss: () => context.read<AuthProvider>().clearError(),
+                ),
+              ],
 
               const Spacer(),
 
@@ -195,7 +248,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      onPressed: _onCancel,
+                      onPressed: auth.loading ? null : _onCancel,
                       child: const Text(
                         'Cancel',
                         style: TextStyle(fontWeight: FontWeight.w900),
@@ -213,10 +266,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      onPressed: _onSave,
-                      child: const Text(
-                        'Save',
-                        style: TextStyle(fontWeight: FontWeight.w900),
+                      onPressed: auth.loading ? null : _onSave,
+                      child: Text(
+                        auth.loading ? 'Saving...' : 'Save',
+                        style: const TextStyle(fontWeight: FontWeight.w900),
                       ),
                     ),
                   ),
@@ -300,6 +353,55 @@ class _SheetAction extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ErrorBanner extends StatelessWidget {
+  final String message;
+  final VoidCallback onDismiss;
+
+  const _ErrorBanner({
+    required this.message,
+    required this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2A0F12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0x55FF3B30)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.error_outline_rounded, color: Colors.redAccent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.w800,
+                height: 1.25,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          InkWell(
+            borderRadius: BorderRadius.circular(999),
+            onTap: onDismiss,
+            child: const Padding(
+              padding: EdgeInsets.all(4),
+              child: Icon(Icons.close_rounded, color: Colors.white70, size: 18),
+            ),
+          ),
+        ],
       ),
     );
   }
