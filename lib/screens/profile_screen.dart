@@ -1,7 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import 'package:motogear/screens/addresses_screen.dart';
+import 'package:motogear/screens/address_card_screen.dart';
 import 'package:motogear/screens/edit_profile_screen.dart';
 import 'package:provider/provider.dart';
 import 'wishlist_screen.dart';
@@ -119,11 +119,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               // ✅ Addresses više ne vodi na wishlist (placeholder)
               _MenuTile(
-                icon: Icons.location_on_outlined,
-                label: 'Addresses',
+                icon: Icons.credit_card_rounded,
+                label: 'Address & Card',
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const AddressesScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => const AddressCardScreen(),
+                    ),
                   );
                 },
               ),

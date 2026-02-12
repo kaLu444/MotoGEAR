@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:motogear/services/payment_service.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -10,6 +11,7 @@ import 'providers/cart_provider.dart';
 import 'providers/navigation_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/wishlist_provider.dart';
+import 'providers/payment_provider.dart';
 import 'services/address_service.dart';
 import 'providers/address_provider.dart';
 import 'services/products_service.dart';
@@ -28,15 +30,27 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(
-          create: (_) => ProductsProvider(ProductsService())..loadProducts(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => CartProvider(CartService())..loadCart(),
-        ),
+
+        // ✅ Auth mora pre ProxyProvider-a
         ChangeNotifierProvider(
           create: (_) => AuthProvider(AuthService())..loadSession(),
         ),
+
+        ChangeNotifierProvider(
+          create: (_) => ProductsProvider(ProductsService())..loadProducts(),
+        ),
+
+        // ✅ Cart zavisi od AuthProvider
+        ChangeNotifierProxyProvider<AuthProvider, CartProvider>(
+          create: (_) => CartProvider(CartService()),
+          update: (_, auth, cart) {
+            cart ??= CartProvider(CartService());
+            cart.updateAuth(auth);
+            return cart;
+          },
+        ),
+
+        // ✅ Address zavisi od AuthProvider
         ChangeNotifierProxyProvider<AuthProvider, AddressProvider>(
           create: (_) => AddressProvider(AddressService()),
           update: (_, auth, addr) {
@@ -45,7 +59,16 @@ Future<void> main() async {
             return addr;
           },
         ),
-        // ✅ Wishlist prati auth (uid)
+        ChangeNotifierProxyProvider<AuthProvider, PaymentProvider>(
+          create: (_) => PaymentProvider(PaymentService()),
+          update: (_, auth, pay) {
+            pay ??= PaymentProvider(PaymentService());
+            pay.updateAuth(auth);
+            return pay;
+          },
+        ),
+
+        // ✅ Wishlist zavisi od AuthProvider
         ChangeNotifierProxyProvider<AuthProvider, WishlistProvider>(
           create: (_) => WishlistProvider(WishlistService()),
           update: (_, auth, wish) {
@@ -55,6 +78,7 @@ Future<void> main() async {
           },
         ),
       ],
+
       child: const MyApp(),
     ),
   );

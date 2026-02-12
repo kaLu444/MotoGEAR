@@ -1,23 +1,24 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import '../models/shipping_address.dart';
-import '../services/address_service.dart';
+
+import '../models/payment_card.dart';
+import '../services/payment_service.dart';
 import 'auth_provider.dart';
 
-class AddressProvider extends ChangeNotifier {
-  final AddressService _service;
-  AddressProvider(this._service);
+class PaymentProvider extends ChangeNotifier {
+  final PaymentService _service;
+  PaymentProvider(this._service);
 
   String? _uid;
-  StreamSubscription<ShippingAddress?>? _sub;
+  StreamSubscription<PaymentCard?>? _sub;
 
   bool _loading = false;
   String? _error;
-  ShippingAddress? _address;
+  PaymentCard? _card;
 
   bool get loading => _loading;
   String? get error => _error;
-  ShippingAddress? get address => _address;
+  PaymentCard? get card => _card;
 
   void updateAuth(AuthProvider auth) {
     final newUid = auth.user?.id;
@@ -26,15 +27,15 @@ class AddressProvider extends ChangeNotifier {
     _bind();
   }
 
-  Future<void> save(ShippingAddress a) async {
+  Future<void> save(PaymentCard c) async {
     final uid = _uid;
     if (uid == null || uid.isEmpty) {
       _error = 'NOT_LOGGED_IN';
       notifyListeners();
       return;
     }
-    if (!a.isValid) {
-      _error = 'INVALID_ADDRESS';
+    if (!c.isValid) {
+      _error = 'INVALID_CARD';
       notifyListeners();
       return;
     }
@@ -44,7 +45,7 @@ class AddressProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _service.saveAddress(uid, a);
+      await _service.saveCard(uid, c);
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -66,7 +67,7 @@ class AddressProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _service.clearAddress(uid);
+      await _service.clearCard(uid);
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -89,19 +90,19 @@ class AddressProvider extends ChangeNotifier {
     if (uid == null || uid.isEmpty) {
       _loading = false;
       _error = null;
-      _address = null;
+      _card = null;
       notifyListeners();
       return;
     }
 
     _loading = true;
     _error = null;
-    _address = null;
+    _card = null;
     notifyListeners();
 
-    _sub = _service.watchAddress(uid).listen(
-      (a) {
-        _address = a;
+    _sub = _service.watchCard(uid).listen(
+      (c) {
+        _card = c;
         _loading = false;
         _error = null;
         notifyListeners();
@@ -109,7 +110,7 @@ class AddressProvider extends ChangeNotifier {
       onError: (e) {
         _loading = false;
         _error = e.toString();
-        _address = null;
+        _card = null;
         notifyListeners();
       },
     );

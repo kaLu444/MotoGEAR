@@ -3,25 +3,21 @@ import 'package:provider/provider.dart';
 
 import '../consts/app_colors.dart';
 import '../providers/auth_provider.dart';
-import '../providers/cart_provider.dart';
 import '../providers/address_provider.dart';
 import '../providers/payment_provider.dart';
-import '../providers/navigation_provider.dart';
 
 import '../models/shipping_address.dart';
 import '../models/payment_card.dart';
 
-import '../services/orders_service.dart';
-
-class CheckoutShippingScreen extends StatefulWidget {
-  const CheckoutShippingScreen({super.key});
+class AddressCardScreen extends StatefulWidget {
+  const AddressCardScreen({super.key});
 
   @override
-  State<CheckoutShippingScreen> createState() => _CheckoutShippingScreenState();
+  State<AddressCardScreen> createState() => _AddressCardScreenState();
 }
 
-class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
-  // ===== Address =====
+class _AddressCardScreenState extends State<AddressCardScreen> {
+  // ---- Address ----
   bool _editingAddress = false;
 
   late final TextEditingController _name;
@@ -31,12 +27,12 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
   late final TextEditingController _postal;
   String _country = 'RS';
 
-  // ===== Card =====
+  // ---- Card ----
   bool _editingCard = false;
 
   late final TextEditingController _holder;
   String _brand = 'Visa';
-  late final TextEditingController _number; // ceo broj kartice
+  late final TextEditingController _number;
   int _expMonth = 1;
   int _expYear = 2026;
 
@@ -92,7 +88,7 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
   void _fillCardFrom(PaymentCard c) {
     _holder.text = c.holderName;
     _brand = c.brand.isEmpty ? 'Visa' : c.brand;
-    _number.text = c.number; // ceo broj
+    _number.text = c.number;
     _expMonth = c.expMonth;
     _expYear = c.expYear;
   }
@@ -114,16 +110,46 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
         backgroundColor: const Color(0xFF17171A),
         content: Text(
           msg,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
     );
   }
 
+  Future<bool> _confirmDelete(String what) async {
+    return (await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            backgroundColor: const Color(0xFF17171A),
+            title: Text(
+              'Delete $what?',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
+            ),
+            content: const Text(
+              'Ova akcija se ne može poništiti.',
+              style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+              ),
+            ],
+          ),
+        )) ??
+        false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    final cart = context.watch<CartProvider>();
     final addrProv = context.watch<AddressProvider>();
     final payProv = context.watch<PaymentProvider>();
 
@@ -133,41 +159,40 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
         appBar: AppBar(
           backgroundColor: AppColors.background,
           foregroundColor: Colors.white,
-          title: const Text('Checkout'),
+          title: const Text('Address & Card'),
         ),
         body: const Center(
           child: Text(
-            'Uloguj se da bi završio kupovinu.',
-            style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w800),
+            'Uloguj se da bi upravljao adresom i karticom.',
+            style: TextStyle(
+              color: Colors.white70,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
       );
     }
 
-    // ===== Address state =====
     final a = addrProv.address;
-
-    if (a != null && !_editingAddress && _name.text.isEmpty) {
-      _fillAddressFrom(a);
-    }
-
     final hasAddress = a != null && a.isValid;
 
-    // ===== Card state =====
     final c = payProv.card;
-
-    if (c != null && !_editingCard && _holder.text.isEmpty) {
-      _fillCardFrom(c);
-    }
-
     final hasCard = c != null && c.isValid;
+
+    // Ako nema podatka -> automatski u edit režim (da može odmah Save)
+    if (!hasAddress && !_editingAddress) _editingAddress = true;
+    if (!hasCard && !_editingCard) _editingCard = true;
+
+    // popuni kontrolere kad postoji podatak, a nisi u edit modu
+    if (a != null && !_editingAddress && _name.text.isEmpty) _fillAddressFrom(a);
+    if (c != null && !_editingCard && _holder.text.isEmpty) _fillCardFrom(c);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         foregroundColor: Colors.white,
-        title: const Text('Checkout'),
+        title: const Text('Address & Card'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
@@ -180,14 +205,18 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
             // ================= Shipping Address =================
             const Text(
               'Shipping Address',
-              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+              ),
             ),
             const SizedBox(height: 12),
 
             if (addrProv.loading)
               const Center(
                 child: Padding(
-                  padding: EdgeInsets.only(top: 30),
+                  padding: EdgeInsets.only(top: 18),
                   child: CircularProgressIndicator(),
                 ),
               )
@@ -199,6 +228,15 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
                     _editingAddress = true;
                     _fillAddressFrom(a);
                   });
+                },
+                onDelete: () async {
+                  final ok = await _confirmDelete('address');
+                  if (!ok) return;
+                  // ignore: use_build_context_synchronously
+                  await context.read<AddressProvider>().delete();
+                  if (!mounted) return;
+                  setState(() => _editingAddress = true);
+                  _toast('Address deleted ✅');
                 },
               )
             else
@@ -222,40 +260,104 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
               ),
             ],
 
-            if (hasAddress && _editingAddress) ...[
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 48,
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Color(0x33FFFFFF)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            // Save/Cancel SAMO kad si u edit modu
+            if (_editingAddress) ...[
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Color(0x33FFFFFF)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          if (hasAddress) {
+                            _editingAddress = false;
+                            _fillAddressFrom(a);
+                          } else {
+                            _name.clear();
+                            _phone.clear();
+                            _line1.clear();
+                            _city.clear();
+                            _postal.clear();
+                            _country = 'RS';
+                          }
+                        });
+                      },
+                      child: const Text('Cancel',
+                          style: TextStyle(fontWeight: FontWeight.w900)),
+                    ),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _editingAddress = false;
-                      _fillAddressFrom(a);
-                    });
-                  },
-                  child: const Text('Cancel edit', style: TextStyle(fontWeight: FontWeight.w900)),
-                ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 52,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.alpinestarsRed,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: addrProv.loading
+                            ? null
+                            : () async {
+                                final newAddr = _buildAddress();
+                                await context.read<AddressProvider>().save(newAddr);
+                                if (!mounted) return;
+
+                                // ignore: use_build_context_synchronously
+                                final ok = context
+                                        .read<AddressProvider>()
+                                        .address
+                                        ?.isValid ==
+                                    true;
+                                if (!ok) {
+                                  _toast('Popuni adresu da sačuvaš.');
+                                  return;
+                                }
+
+                                setState(() => _editingAddress = false);
+                                _toast('Address saved ✅');
+                              },
+                        child: Text(
+                          addrProv.loading ? 'Saving...' : 'Save',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
 
-            const SizedBox(height: 22),
+            const SizedBox(height: 26),
 
             // ================= Credit Card =================
             const Text(
               'Credit Card',
-              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+              ),
             ),
             const SizedBox(height: 12),
 
             if (payProv.loading)
               const Center(
                 child: Padding(
-                  padding: EdgeInsets.only(top: 30),
+                  padding: EdgeInsets.only(top: 18),
                   child: CircularProgressIndicator(),
                 ),
               )
@@ -267,6 +369,15 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
                     _editingCard = true;
                     _fillCardFrom(c);
                   });
+                },
+                onDelete: () async {
+                  final ok = await _confirmDelete('card');
+                  if (!ok) return;
+                  // ignore: use_build_context_synchronously
+                  await context.read<PaymentProvider>().delete();
+                  if (!mounted) return;
+                  setState(() => _editingCard = true);
+                  _toast('Card deleted ✅');
                 },
               )
             else
@@ -291,140 +402,85 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
               ),
             ],
 
-            if (hasCard && _editingCard) ...[
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 48,
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Color(0x33FFFFFF)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _editingCard = false;
-                      _fillCardFrom(c);
-                    });
-                  },
-                  child: const Text('Cancel edit', style: TextStyle(fontWeight: FontWeight.w900)),
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 18),
-
-            // ================= Summary =================
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFF17171A),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0x22000000)),
-              ),
-              child: Column(
+            // Save/Cancel SAMO kad si u edit modu
+            if (_editingCard) ...[
+              const SizedBox(height: 16),
+              Row(
                 children: [
-                  _RowKV(label: 'Subtotal', value: '€${cart.total.toStringAsFixed(2)}'),
-                  const SizedBox(height: 8),
-                  const _RowKV(label: 'Shipping', value: 'FREE'),
-                  const SizedBox(height: 12),
-                  const Divider(color: Color(0x22FFFFFF)),
-                  const SizedBox(height: 10),
-                  _RowKV(
-                    label: 'Total',
-                    value: '€${cart.total.toStringAsFixed(2)}',
-                    strong: true,
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Color(0x33FFFFFF)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          if (hasCard) {
+                            _editingCard = false;
+                            _fillCardFrom(c);
+                          } else {
+                            _holder.clear();
+                            _number.clear();
+                            _brand = 'Visa';
+                            _expMonth = 1;
+                            _expYear = 2026;
+                          }
+                        });
+                      },
+                      child: const Text('Cancel',
+                          style: TextStyle(fontWeight: FontWeight.w900)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 52,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.alpinestarsRed,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: payProv.loading
+                            ? null
+                            : () async {
+                                final newCard = _buildCard();
+                                await context.read<PaymentProvider>().save(newCard);
+                                if (!mounted) return;
+
+                                // ignore: use_build_context_synchronously
+                                final ok = context
+                                        .read<PaymentProvider>()
+                                        .card
+                                        ?.isValid ==
+                                    true;
+                                if (!ok) {
+                                  _toast('Popuni karticu da sačuvaš.');
+                                  return;
+                                }
+
+                                setState(() => _editingCard = false);
+                                _toast('Card saved ✅');
+                              },
+                        child: Text(
+                          payProv.loading ? 'Saving...' : 'Save',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // ================= Continue =================
-            SizedBox(
-              height: 54,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.alpinestarsRed,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-                onPressed: (addrProv.loading || payProv.loading)
-                    ? null
-                    : () async {
-                        // 0) korpa prazna
-                        if (cart.items.isEmpty) {
-                          _toast('Korpa je prazna.');
-                          return;
-                        }
-
-                        // 1) Address: ako nema validnu adresu ili je u edit modu -> pokušaj save iz forme
-                        if (!(hasAddress && !_editingAddress)) {
-                          final newAddr = _buildAddress();
-                          await context.read<AddressProvider>().save(newAddr);
-                          if (!mounted) return;
-
-                          final okAddr =
-                              // ignore: use_build_context_synchronously
-                              context.read<AddressProvider>().address?.isValid == true;
-                          if (!okAddr) {
-                            _toast('Popuni adresu da nastaviš.');
-                            return;
-                          }
-                          setState(() => _editingAddress = false);
-                        }
-
-                        // 2) Card: ako nema validnu karticu ili je u edit modu -> pokušaj save iz forme
-                        if (!(hasCard && !_editingCard)) {
-                          final newCard = _buildCard();
-                          // ignore: use_build_context_synchronously
-                          await context.read<PaymentProvider>().save(newCard);
-                          if (!mounted) return;
-
-                          // ignore: use_build_context_synchronously
-                          final okCard = context.read<PaymentProvider>().card?.isValid == true;
-                          if (!okCard) {
-                            _toast('Popuni karticu da nastaviš.');
-                            return;
-                          }
-                          setState(() => _editingCard = false);
-                        }
-
-                        // 3) place order + clear cart
-                        final uid = auth.user!.id;
-                        final shipping = context.read<AddressProvider>().address;
-
-                        if (shipping == null || !shipping.isValid) {
-                          _toast('Adresa nije validna.');
-                          return;
-                        }
-
-                        try {
-                          await OrdersService().placeOrder(
-                            uid: uid,
-                            items: cart.items,
-                            total: cart.total,
-                            shipping: shipping,
-                          );
-
-                          await context.read<CartProvider>().clear();
-
-                          if (!mounted) return;
-                          _toast('Order placed ✅');
-
-                          Navigator.popUntil(context, (r) => r.isFirst);
-                          context.read<NavigationProvider>().setIndex(3); // profile
-                        } catch (e) {
-                          _toast('Greška: $e');
-                        }
-                      },
-                child: Text(
-                  (addrProv.loading || payProv.loading) ? 'Saving...' : 'Continue',
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
-                ),
-              ),
-            ),
+            ],
           ],
         ),
       ),
@@ -432,13 +488,18 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
   }
 }
 
-// ===================== Address widgets (isti kao tvoji) =====================
+// ===================== Address widgets =====================
 
 class _AddressCard extends StatelessWidget {
   final ShippingAddress address;
   final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
-  const _AddressCard({required this.address, required this.onEdit});
+  const _AddressCard({
+    required this.address,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -458,31 +519,75 @@ class _AddressCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(address.fullName,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+                Text(
+                  address.fullName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(address.phone,
-                    style:
-                        const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w700)),
+                Text(
+                  address.phone,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 10),
-                Text(address.line1,
-                    style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
-                Text('${address.city}, ${address.postalCode}',
-                    style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
-                Text(address.countryCode,
-                    style: const TextStyle(color: Colors.white54, fontWeight: FontWeight.w700)),
+                Text(
+                  address.line1,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  '${address.city}, ${address.postalCode}',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  address.countryCode,
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: const BorderSide(color: Color(0x33FFFFFF)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: onEdit,
-            child: const Text('Edit', style: TextStyle(fontWeight: FontWeight.w900)),
+          Column(
+            children: [
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Color(0x33FFFFFF)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: onEdit,
+                child: const Text('Edit',
+                    style: TextStyle(fontWeight: FontWeight.w900)),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Color(0x55FF3B30)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: onDelete,
+                child: const Text('Delete',
+                    style: TextStyle(fontWeight: FontWeight.w900)),
+              ),
+            ],
           ),
         ],
       ),
@@ -515,7 +620,10 @@ class _AddressForm extends StatelessWidget {
       return TextField(
         controller: c,
         keyboardType: type,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+        ),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: const TextStyle(color: Colors.white70),
@@ -541,7 +649,9 @@ class _AddressForm extends StatelessWidget {
           children: [
             Expanded(child: field('City', city)),
             const SizedBox(width: 12),
-            Expanded(child: field('Postal code', postal, type: TextInputType.number)),
+            Expanded(
+              child: field('Postal code', postal, type: TextInputType.number),
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -555,14 +665,20 @@ class _AddressForm extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide.none,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 6,
+            ),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: countryCode,
               dropdownColor: const Color(0xFF17171A),
               icon: const Icon(Icons.expand_more, color: Colors.white70),
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
               onChanged: (v) {
                 if (v != null) onCountryChanged(v);
               },
@@ -584,8 +700,13 @@ class _AddressForm extends StatelessWidget {
 class _CardPreview extends StatelessWidget {
   final PaymentCard card;
   final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
-  const _CardPreview({required this.card, required this.onEdit});
+  const _CardPreview({
+    required this.card,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -605,30 +726,61 @@ class _CardPreview extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(card.holderName,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+                Text(
+                  card.holderName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 Text(
-                  '${card.brand}  ${card.number}', // ceo broj
-                  style: const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w800),
+                  '${card.brand}  ${card.number}',
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Text(
                   'Exp: ${card.expMonth.toString().padLeft(2, '0')}/${card.expYear}',
-                  style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w800),
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: const BorderSide(color: Color(0x33FFFFFF)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: onEdit,
-            child: const Text('Edit', style: TextStyle(fontWeight: FontWeight.w900)),
+          Column(
+            children: [
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Color(0x33FFFFFF)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: onEdit,
+                child: const Text('Edit',
+                    style: TextStyle(fontWeight: FontWeight.w900)),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Color(0x55FF3B30)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: onDelete,
+                child: const Text('Delete',
+                    style: TextStyle(fontWeight: FontWeight.w900)),
+              ),
+            ],
           ),
         ],
       ),
@@ -670,7 +822,10 @@ class _CardForm extends StatelessWidget {
         controller: c,
         keyboardType: type,
         maxLength: maxLen,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+        ),
         decoration: InputDecoration(
           counterText: '',
           labelText: label,
@@ -685,7 +840,7 @@ class _CardForm extends StatelessWidget {
       );
     }
 
-    final years = List<int>.generate(12, (i) => DateTime.now().year + i);
+    final years = List<int>.generate(10, (i) => DateTime.now().year + i);
 
     return Column(
       children: [
@@ -702,14 +857,20 @@ class _CardForm extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide.none,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 6,
+            ),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: brand,
               dropdownColor: const Color(0xFF17171A),
               icon: const Icon(Icons.expand_more, color: Colors.white70),
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
               onChanged: (v) {
                 if (v != null) onBrandChanged(v);
               },
@@ -723,8 +884,6 @@ class _CardForm extends StatelessWidget {
         ),
 
         const SizedBox(height: 12),
-
-        // ceo broj, 13-19 cifara (kao tvoj isValid)
         field('Card number', number, type: TextInputType.number, maxLen: 19),
 
         const SizedBox(height: 12),
@@ -742,14 +901,20 @@ class _CardForm extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<int>(
                     value: expMonth,
                     dropdownColor: const Color(0xFF17171A),
                     icon: const Icon(Icons.expand_more, color: Colors.white70),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
                     onChanged: (v) {
                       if (v != null) onMonthChanged(v);
                     },
@@ -776,14 +941,20 @@ class _CardForm extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<int>(
                     value: expYear,
                     dropdownColor: const Color(0xFF17171A),
                     icon: const Icon(Icons.expand_more, color: Colors.white70),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
                     onChanged: (v) {
                       if (v != null) onYearChanged(v);
                     },
@@ -796,38 +967,6 @@ class _CardForm extends StatelessWidget {
             ),
           ],
         ),
-      ],
-    );
-  }
-}
-
-// ===================== Shared widgets =====================
-
-class _RowKV extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool strong;
-
-  const _RowKV({required this.label, required this.value, this.strong = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final styleL = TextStyle(
-      color: strong ? Colors.white : Colors.white70,
-      fontSize: strong ? 18 : 15,
-      fontWeight: strong ? FontWeight.w900 : FontWeight.w800,
-    );
-    final styleR = TextStyle(
-      color: Colors.white,
-      fontSize: strong ? 18 : 15,
-      fontWeight: strong ? FontWeight.w900 : FontWeight.w900,
-    );
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: styleL),
-        Text(value, style: styleR),
       ],
     );
   }
@@ -854,7 +993,10 @@ class _ErrorBanner extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
           InkWell(
@@ -863,7 +1005,7 @@ class _ErrorBanner extends StatelessWidget {
               padding: EdgeInsets.all(4),
               child: Icon(Icons.close_rounded, color: Colors.white70, size: 18),
             ),
-          )
+          ),
         ],
       ),
     );

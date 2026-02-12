@@ -68,7 +68,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         backgroundColor: const Color(0xFF17171A),
         content: Text(
           msg,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
     );
@@ -82,14 +85,15 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       (w) => w.isWishlisted(product.id),
     );
 
+    // max 2 slike (ako ima 1 -> dupliciraj; ako nema -> [])
     final images = product.images.length >= 2
         ? product.images.take(2).toList()
         : product.images.isEmpty
-            ? <String>[]
-            : <String>[
-                ...product.images,
-                ...List.filled(2 - product.images.length, product.images.first),
-              ];
+        ? <String>[]
+        : <String>[
+            ...product.images,
+            ...List.filled(2 - product.images.length, product.images.first),
+          ];
 
     final sizes = _sizes;
 
@@ -200,35 +204,42 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               child: _BottomBar(
                 price: product.priceLabel,
                 isWishlisted: isWishlisted,
+
+                // ✅ async safe
                 onToggleWishlist: () async {
                   final auth = context.read<AuthProvider>();
                   if (!auth.isLoggedIn) {
                     _toast(context, 'Uloguj se da bi koristio wishlist.');
                     return;
                   }
-
                   await context.read<WishlistProvider>().toggle(product.id);
                 },
-                onAddToCart: () {
+
+                // ✅ async safe (za slučaj da updateItemSize bude Future u provideru)
+                onAddToCart: () async {
                   final sizesNow = _sizes;
                   final safeIndex = _selectedSizeIndex.clamp(
                     0,
                     (sizesNow.isEmpty ? 0 : sizesNow.length - 1),
                   );
-                  final selectedSize =
-                      sizesNow.isEmpty ? 'One Size' : sizesNow[safeIndex];
+                  final selectedSize = sizesNow.isEmpty
+                      ? 'One Size'
+                      : sizesNow[safeIndex];
 
                   final cartProv = context.read<CartProvider>();
 
                   if (widget.isEditing) {
-                    cartProv.updateItemSize(
+                    await cartProv.updateItemSize(
                       cartItemId: widget.editingCartItemId!,
+                      product: product,
+                      oldSize: widget.initialSize ?? selectedSize,
                       newSize: selectedSize,
                     );
                   } else {
                     cartProv.addToCart(product: product, size: selectedSize);
                   }
 
+                  if (!mounted) return;
                   context.read<NavigationProvider>().setIndex(2);
                   Navigator.of(context).popUntil((route) => route.isFirst);
                 },
@@ -261,7 +272,8 @@ class _TopImageFixed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final idx = pageIndex.clamp(0, images.length - 1);
+    // ✅ ne puca kad nema slika
+    final idx = images.isEmpty ? 0 : pageIndex.clamp(0, images.length - 1);
 
     return SizedBox(
       height: 420,
@@ -347,11 +359,7 @@ class _TopImageFixed extends StatelessWidget {
               bottom: 18,
               left: 0,
               right: 0,
-              child: _Dots(
-                count: images.length,
-                index: idx,
-                onTap: onDotTap,
-              ),
+              child: _Dots(count: images.length, index: idx, onTap: onDotTap),
             ),
         ],
       ),
@@ -442,7 +450,9 @@ class _SizeChip extends StatelessWidget {
               : const Color(0xFF1A1A1E),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected ? AppColors.alpinestarsRed : const Color(0x22000000),
+            color: selected
+                ? AppColors.alpinestarsRed
+                : const Color(0x22000000),
           ),
         ),
         child: Text(
@@ -458,12 +468,12 @@ class _SizeChip extends StatelessWidget {
   }
 }
 
-/// ✅ OVO JE `_BottomBar` — ovde je wishlist dugme
+/// ✅ BottomBar sa async callback-ovima
 class _BottomBar extends StatelessWidget {
   final String price;
   final bool isWishlisted;
-  final VoidCallback onToggleWishlist;
-  final VoidCallback onAddToCart;
+  final Future<void> Function() onToggleWishlist;
+  final Future<void> Function() onAddToCart;
 
   const _BottomBar({
     required this.price,
@@ -482,8 +492,9 @@ class _BottomBar extends StatelessWidget {
         ? AppColors.alpinestarsRed.withOpacity(0.65)
         : const Color(0x33FFFFFF);
 
-    final wishIcon =
-        isWishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded;
+    final wishIcon = isWishlisted
+        ? Icons.favorite_rounded
+        : Icons.favorite_border_rounded;
 
     final wishText = isWishlisted ? 'Wishlisted' : 'Add to Wishlist';
 
@@ -524,7 +535,7 @@ class _BottomBar extends StatelessWidget {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    onPressed: onToggleWishlist,
+                    onPressed: () async => await onToggleWishlist(),
                     icon: Icon(wishIcon, color: Colors.white),
                     label: Text(
                       wishText,
@@ -544,7 +555,7 @@ class _BottomBar extends StatelessWidget {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    onPressed: onAddToCart,
+                    onPressed: () async => await onAddToCart(),
                     child: const Text(
                       'Add to Cart',
                       style: TextStyle(
