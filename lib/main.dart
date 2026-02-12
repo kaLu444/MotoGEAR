@@ -10,7 +10,8 @@ import 'providers/cart_provider.dart';
 import 'providers/navigation_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/wishlist_provider.dart';
-
+import 'services/address_service.dart';
+import 'providers/address_provider.dart';
 import 'services/products_service.dart';
 import 'services/cart_service.dart';
 import 'services/auth_service.dart';
@@ -20,9 +21,7 @@ import 'screens/root_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(
     MultiProvider(
@@ -38,7 +37,14 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (_) => AuthProvider(AuthService())..loadSession(),
         ),
-
+        ChangeNotifierProxyProvider<AuthProvider, AddressProvider>(
+          create: (_) => AddressProvider(AddressService()),
+          update: (_, auth, addr) {
+            addr ??= AddressProvider(AddressService());
+            addr.updateAuth(auth);
+            return addr;
+          },
+        ),
         // ✅ Wishlist prati auth (uid)
         ChangeNotifierProxyProvider<AuthProvider, WishlistProvider>(
           create: (_) => WishlistProvider(WishlistService()),

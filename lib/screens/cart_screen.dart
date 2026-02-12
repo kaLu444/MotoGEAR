@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:motogear/screens/checkout_shipping_screen.dart';
 import 'package:motogear/screens/product_details_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -41,7 +42,6 @@ class CartScreen extends StatelessWidget {
                   else if (cart.items.isEmpty)
                     _EmptyCart(
                       onGoShopping: () {
-                        
                         context.read<NavigationProvider>().setIndex(1);
                       },
                     )
@@ -52,8 +52,7 @@ class CartScreen extends StatelessWidget {
                         child: CartItemWidget(
                           imageAsset: item.product.coverImage,
                           title: item.product.title,
-                          subtitle:
-                              item.product.subtitle, 
+                          subtitle: item.product.subtitle,
                           size: item.size,
                           priceLabel: item.product.priceLabel,
                           inStock: item.inStock,
@@ -111,7 +110,13 @@ class CartScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const CheckoutShippingScreen(),
+                            ),
+                          );
+                        },
                         child: const Text(
                           'Checkout',
                           style: TextStyle(

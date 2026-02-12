@@ -54,7 +54,7 @@ class CartItemWidget extends StatelessWidget {
                   imageAsset,
                   fit: BoxFit.cover,
                   filterQuality: FilterQuality.high,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     color: const Color(0xFF101012),
                     alignment: Alignment.center,
                     child: const Icon(

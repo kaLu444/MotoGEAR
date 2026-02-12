@@ -1,1 +1,39 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"alpinestars-fa28a","appId":"1:22088865381:android:55be318c2d2a5f1df7588c","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"alpinestars-fa28a","configurations":{"android":"1:22088865381:android:55be318c2d2a5f1df7588c","ios":"1:22088865381:ios:4b272b6874977feaf7588c","macos":"1:22088865381:ios:4b272b6874977feaf7588c","web":"1:22088865381:web:975172e5b895a776f7588c","windows":"1:22088865381:web:320ca29aaea238e8f7588c"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "alpinestars-fa28a",
+          "appId": "1:22088865381:android:55be318c2d2a5f1df7588c",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "alpinestars-fa28a",
+          "configurations": {
+            "android": "1:22088865381:android:55be318c2d2a5f1df7588c",
+            "ios": "1:22088865381:ios:4b272b6874977feaf7588c",
+            "macos": "1:22088865381:ios:4b272b6874977feaf7588c",
+            "web": "1:22088865381:web:975172e5b895a776f7588c",
+            "windows": "1:22088865381:web:320ca29aaea238e8f7588c"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
+}

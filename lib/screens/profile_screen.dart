@@ -1,4 +1,7 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
+import 'package:motogear/screens/addresses_screen.dart';
 import 'package:motogear/screens/edit_profile_screen.dart';
 import 'package:provider/provider.dart';
 import 'wishlist_screen.dart';
@@ -87,9 +90,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   context.read<AuthProvider>().clearError();
 
                   if (msg != null && msg.trim().isNotEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(msg)),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(msg)));
                   }
                 },
               ),
@@ -119,8 +122,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: Icons.location_on_outlined,
                 label: 'Addresses',
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Addresses: coming soon.')),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AddressesScreen()),
                   );
                 },
               ),
@@ -467,9 +470,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ? null
                       : () async {
                           await context.read<AuthProvider>().login(
-                                email: _email.text.trim(),
-                                password: _pass.text,
-                              );
+                            email: _email.text.trim(),
+                            password: _pass.text,
+                          );
 
                           if (!mounted) return;
 
@@ -578,10 +581,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ? null
                       : () async {
                           await context.read<AuthProvider>().register(
-                                name: _name.text.trim(),
-                                email: _email.text.trim(),
-                                password: _pass.text,
-                              );
+                            name: _name.text.trim(),
+                            email: _email.text.trim(),
+                            password: _pass.text,
+                          );
 
                           if (!mounted) return;
 
