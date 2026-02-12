@@ -1,3 +1,4 @@
+// lib/widgets/filter_button_widget.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,13 +20,42 @@ class FilterButtonWidget extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       builder: (_) {
-        double minP = prov.minPrice;
-        double maxP = prov.maxPrice;
+        // ✅ slider range (uzima se iz providera, ne hardkod 800)
+        const sliderMin = 0.0;
+        final sliderMaxRaw = prov.defaultMaxPrice;
+        final sliderMax = (sliderMaxRaw <= sliderMin) ? 100.0 : sliderMaxRaw;
+
+        // ✅ inicijalno clamp + swap ako treba
+        double minP = prov.minPrice.clamp(sliderMin, sliderMax);
+        double maxP = prov.maxPrice.clamp(sliderMin, sliderMax);
+        if (minP > maxP) {
+          final t = minP;
+          minP = maxP;
+          maxP = t;
+        }
+
         bool techAir = prov.techAirReady;
         bool waterproof = prov.waterproof;
 
+        int _divisions100(double max) {
+          // korak 100 → divisions = max/100 (min 1)
+          final d = (max / 100).round();
+          return d.clamp(1, 500);
+        }
+
+        double _snap100(double v) => (v / 100).round() * 100.0;
+
         return StatefulBuilder(
           builder: (context, setModalState) {
+            // ✅ snap na 100 + clamp (da UI bude stabilan)
+            minP = _snap100(minP).clamp(sliderMin, sliderMax);
+            maxP = _snap100(maxP).clamp(sliderMin, sliderMax);
+            if (minP > maxP) {
+              final t = minP;
+              minP = maxP;
+              maxP = t;
+            }
+
             return Padding(
               padding: EdgeInsets.only(
                 left: 12,
@@ -47,35 +77,62 @@ class FilterButtonWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
 
-                  
+                  // Price range
                   const _SectionTitle('Price range'),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Expanded(child: _ChipBox(text: '€${minP.toStringAsFixed(0)}')),
+                      Expanded(
+                        child: _ChipBox(text: '€${minP.toStringAsFixed(0)}'),
+                      ),
                       const SizedBox(width: 10),
-                      Expanded(child: _ChipBox(text: '€${maxP.toStringAsFixed(0)}')),
+                      Expanded(
+                        child: _ChipBox(text: '€${maxP.toStringAsFixed(0)}'),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 10),
+
                   RangeSlider(
                     values: RangeValues(minP, maxP),
-                    min: 0,
-                    max: 800,
-                    divisions: 16,
+                    min: sliderMin,
+                    max: sliderMax,
+                    divisions: _divisions100(sliderMax),
                     labels: RangeLabels(
                       '€${minP.toStringAsFixed(0)}',
                       '€${maxP.toStringAsFixed(0)}',
                     ),
                     onChanged: (v) => setModalState(() {
-                      minP = v.start;
-                      maxP = v.end;
+                      var a = v.start;
+                      var b = v.end;
+
+                      // clamp
+                      a = a.clamp(sliderMin, sliderMax);
+                      b = b.clamp(sliderMin, sliderMax);
+
+                      // snap na 100
+                      a = _snap100(a);
+                      b = _snap100(b);
+
+                      // clamp posle snapa (za svaki slučaj)
+                      a = a.clamp(sliderMin, sliderMax);
+                      b = b.clamp(sliderMin, sliderMax);
+
+                      // swap ako treba
+                      if (a > b) {
+                        final t = a;
+                        a = b;
+                        b = t;
+                      }
+
+                      minP = a;
+                      maxP = b;
                     }),
                   ),
 
                   const SizedBox(height: 10),
 
-                  
+                  // Features
                   const _SectionTitle('Features'),
                   const SizedBox(height: 6),
                   SwitchListTile(
@@ -113,7 +170,7 @@ class FilterButtonWidget extends StatelessWidget {
 
                   const SizedBox(height: 8),
 
-                  
+                  // Actions
                   Row(
                     children: [
                       Expanded(
@@ -128,8 +185,8 @@ class FilterButtonWidget extends StatelessWidget {
                           ),
                           onPressed: () {
                             setModalState(() {
-                              minP = 0;
-                              maxP = 800;
+                              minP = sliderMin;
+                              maxP = sliderMax;
                               techAir = false;
                               waterproof = false;
                             });

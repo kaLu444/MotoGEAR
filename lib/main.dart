@@ -1,4 +1,7 @@
+// lib/main.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:motogear/seeder.dart';
 import 'package:motogear/services/payment_service.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -18,12 +21,19 @@ import 'services/products_service.dart';
 import 'services/cart_service.dart';
 import 'services/auth_service.dart';
 import 'services/wishlist_service.dart';
+import 'providers/orders_provider.dart';
+import 'services/orders_service.dart';
 
 import 'screens/root_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+
+  /*if (kDebugMode) {
+    await DevSeeder.seedProductsOnce();
+  }*/
 
   runApp(
     MultiProvider(
@@ -36,11 +46,11 @@ Future<void> main() async {
           create: (_) => AuthProvider(AuthService())..loadSession(),
         ),
 
+        // ✅ Products se učitavaju iz Firestore
         ChangeNotifierProvider(
           create: (_) => ProductsProvider(ProductsService())..loadProducts(),
         ),
 
-        // ✅ Cart zavisi od AuthProvider
         ChangeNotifierProxyProvider<AuthProvider, CartProvider>(
           create: (_) => CartProvider(CartService()),
           update: (_, auth, cart) {
@@ -50,7 +60,6 @@ Future<void> main() async {
           },
         ),
 
-        // ✅ Address zavisi od AuthProvider
         ChangeNotifierProxyProvider<AuthProvider, AddressProvider>(
           create: (_) => AddressProvider(AddressService()),
           update: (_, auth, addr) {
@@ -59,6 +68,7 @@ Future<void> main() async {
             return addr;
           },
         ),
+
         ChangeNotifierProxyProvider<AuthProvider, PaymentProvider>(
           create: (_) => PaymentProvider(PaymentService()),
           update: (_, auth, pay) {
@@ -68,7 +78,6 @@ Future<void> main() async {
           },
         ),
 
-        // ✅ Wishlist zavisi od AuthProvider
         ChangeNotifierProxyProvider<AuthProvider, WishlistProvider>(
           create: (_) => WishlistProvider(WishlistService()),
           update: (_, auth, wish) {
@@ -77,8 +86,16 @@ Future<void> main() async {
             return wish;
           },
         ),
-      ],
 
+        ChangeNotifierProxyProvider<AuthProvider, OrdersProvider>(
+          create: (_) => OrdersProvider(OrdersService()),
+          update: (_, auth, ord) {
+            ord ??= OrdersProvider(OrdersService());
+            ord.updateAuth(auth);
+            return ord;
+          },
+        ),
+      ],
       child: const MyApp(),
     ),
   );

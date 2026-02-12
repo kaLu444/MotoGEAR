@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:motogear/screens/address_card_screen.dart';
 import 'package:motogear/screens/edit_profile_screen.dart';
+import 'package:motogear/screens/orders_screen.dart';
 import 'package:provider/provider.dart';
 import 'wishlist_screen.dart';
 
@@ -101,7 +102,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _MenuTile(
                 icon: Icons.shopping_bag_outlined,
                 label: 'Orders',
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const OrdersScreen()),
+                  );
+                },
               ),
               const SizedBox(height: 12),
 

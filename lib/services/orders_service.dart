@@ -1,3 +1,4 @@
+// lib/services/orders_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/cart_item.dart';
 import '../models/shipping_address.dart';
@@ -27,6 +28,36 @@ class OrdersService {
       'items': items.map((x) => x.toMap()).toList(),
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> cancelOrder({
+    required String uid,
+    required String orderId,
+  }) async {
+    if (uid.isEmpty) throw StateError('NOT_LOGGED_IN');
+    if (orderId.isEmpty) throw StateError('INVALID_ORDER_ID');
+
+    final ref = _ordersCol(uid).doc(orderId);
+
+    await _db.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) throw StateError('ORDER_NOT_FOUND');
+
+      final data = snap.data() as Map<String, dynamic>;
+      final status = (data['status'] as String?) ?? 'placed';
+
+      // dozvoli otkaz samo dok NIJE shipped/delivered (tj. nije u toku isporuka ili isporučeno)
+      const canCancel = {'placed', 'paid'};
+      if (!canCancel.contains(status)) {
+        throw StateError('CANNOT_CANCEL_STATUS:$status');
+      }
+
+      tx.update(ref, {
+        'status': 'cancelled',
+        'cancelledAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
     });
   }
 
