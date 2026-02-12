@@ -74,7 +74,7 @@ class AuthService {
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
-    // i displayName u auth
+    
     await cred.user!.updateDisplayName(name);
 
     return AuthUser(id: uid, name: name, email: email, isAdmin: false);
@@ -108,7 +108,7 @@ class AuthService {
     }
 
     if (em.isNotEmpty && (u.email ?? '') != em) {
-      // ✅ umesto updateEmail (koji ti ne postoji)
+      
       await u.verifyBeforeUpdateEmail(em);
     }
   }

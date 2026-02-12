@@ -17,7 +17,7 @@ class AddressCardScreen extends StatefulWidget {
 }
 
 class _AddressCardScreenState extends State<AddressCardScreen> {
-  // ---- Address ----
+  
   bool _editingAddress = false;
 
   late final TextEditingController _name;
@@ -27,7 +27,7 @@ class _AddressCardScreenState extends State<AddressCardScreen> {
   late final TextEditingController _postal;
   String _country = 'RS';
 
-  // ---- Card ----
+  
   bool _editingCard = false;
 
   late final TextEditingController _holder;
@@ -63,7 +63,7 @@ class _AddressCardScreenState extends State<AddressCardScreen> {
     super.dispose();
   }
 
-  // ---------------- Address helpers ----------------
+  
   void _fillAddressFrom(ShippingAddress a) {
     _name.text = a.fullName;
     _phone.text = a.phone;
@@ -84,7 +84,7 @@ class _AddressCardScreenState extends State<AddressCardScreen> {
     );
   }
 
-  // ---------------- Card helpers ----------------
+  
   void _fillCardFrom(PaymentCard c) {
     _holder.text = c.holderName;
     _brand = c.brand.isEmpty ? 'Visa' : c.brand;
@@ -179,11 +179,11 @@ class _AddressCardScreenState extends State<AddressCardScreen> {
     final c = payProv.card;
     final hasCard = c != null && c.isValid;
 
-    // Ako nema podatka -> automatski u edit režim (da može odmah Save)
+    
     if (!hasAddress && !_editingAddress) _editingAddress = true;
     if (!hasCard && !_editingCard) _editingCard = true;
 
-    // popuni kontrolere kad postoji podatak, a nisi u edit modu
+    
     if (a != null && !_editingAddress && _name.text.isEmpty) _fillAddressFrom(a);
     if (c != null && !_editingCard && _holder.text.isEmpty) _fillCardFrom(c);
 
@@ -202,7 +202,7 @@ class _AddressCardScreenState extends State<AddressCardScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 18),
           children: [
-            // ================= Shipping Address =================
+            
             const Text(
               'Shipping Address',
               style: TextStyle(
@@ -232,7 +232,7 @@ class _AddressCardScreenState extends State<AddressCardScreen> {
                 onDelete: () async {
                   final ok = await _confirmDelete('address');
                   if (!ok) return;
-                  // ignore: use_build_context_synchronously
+                  
                   await context.read<AddressProvider>().delete();
                   if (!mounted) return;
                   setState(() => _editingAddress = true);
@@ -260,7 +260,7 @@ class _AddressCardScreenState extends State<AddressCardScreen> {
               ),
             ],
 
-            // Save/Cancel SAMO kad si u edit modu
+            
             if (_editingAddress) ...[
               const SizedBox(height: 16),
               Row(
@@ -313,7 +313,7 @@ class _AddressCardScreenState extends State<AddressCardScreen> {
                                 await context.read<AddressProvider>().save(newAddr);
                                 if (!mounted) return;
 
-                                // ignore: use_build_context_synchronously
+                                
                                 final ok = context
                                         .read<AddressProvider>()
                                         .address
@@ -343,7 +343,7 @@ class _AddressCardScreenState extends State<AddressCardScreen> {
 
             const SizedBox(height: 26),
 
-            // ================= Credit Card =================
+            
             const Text(
               'Credit Card',
               style: TextStyle(
@@ -373,7 +373,7 @@ class _AddressCardScreenState extends State<AddressCardScreen> {
                 onDelete: () async {
                   final ok = await _confirmDelete('card');
                   if (!ok) return;
-                  // ignore: use_build_context_synchronously
+                  
                   await context.read<PaymentProvider>().delete();
                   if (!mounted) return;
                   setState(() => _editingCard = true);
@@ -402,7 +402,7 @@ class _AddressCardScreenState extends State<AddressCardScreen> {
               ),
             ],
 
-            // Save/Cancel SAMO kad si u edit modu
+            
             if (_editingCard) ...[
               const SizedBox(height: 16),
               Row(
@@ -454,7 +454,7 @@ class _AddressCardScreenState extends State<AddressCardScreen> {
                                 await context.read<PaymentProvider>().save(newCard);
                                 if (!mounted) return;
 
-                                // ignore: use_build_context_synchronously
+                                
                                 final ok = context
                                         .read<PaymentProvider>()
                                         .card
@@ -488,7 +488,7 @@ class _AddressCardScreenState extends State<AddressCardScreen> {
   }
 }
 
-// ===================== Address widgets =====================
+
 
 class _AddressCard extends StatelessWidget {
   final ShippingAddress address;
@@ -695,7 +695,7 @@ class _AddressForm extends StatelessWidget {
   }
 }
 
-// ===================== Card widgets =====================
+
 
 class _CardPreview extends StatelessWidget {
   final PaymentCard card;

@@ -1,4 +1,4 @@
-// lib/widgets/filter_button_widget.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -20,12 +20,12 @@ class FilterButtonWidget extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       builder: (_) {
-        // ✅ slider range (uzima se iz providera, ne hardkod 800)
+        
         const sliderMin = 0.0;
         final sliderMaxRaw = prov.defaultMaxPrice;
         final sliderMax = (sliderMaxRaw <= sliderMin) ? 100.0 : sliderMaxRaw;
 
-        // ✅ inicijalno clamp + swap ako treba
+        
         double minP = prov.minPrice.clamp(sliderMin, sliderMax);
         double maxP = prov.maxPrice.clamp(sliderMin, sliderMax);
         if (minP > maxP) {
@@ -38,7 +38,7 @@ class FilterButtonWidget extends StatelessWidget {
         bool waterproof = prov.waterproof;
 
         int _divisions100(double max) {
-          // korak 100 → divisions = max/100 (min 1)
+          
           final d = (max / 100).round();
           return d.clamp(1, 500);
         }
@@ -47,7 +47,7 @@ class FilterButtonWidget extends StatelessWidget {
 
         return StatefulBuilder(
           builder: (context, setModalState) {
-            // ✅ snap na 100 + clamp (da UI bude stabilan)
+            
             minP = _snap100(minP).clamp(sliderMin, sliderMax);
             maxP = _snap100(maxP).clamp(sliderMin, sliderMax);
             if (minP > maxP) {
@@ -77,7 +77,7 @@ class FilterButtonWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
 
-                  // Price range
+                  
                   const _SectionTitle('Price range'),
                   const SizedBox(height: 8),
                   Row(
@@ -106,19 +106,19 @@ class FilterButtonWidget extends StatelessWidget {
                       var a = v.start;
                       var b = v.end;
 
-                      // clamp
+                      
                       a = a.clamp(sliderMin, sliderMax);
                       b = b.clamp(sliderMin, sliderMax);
 
-                      // snap na 100
+                      
                       a = _snap100(a);
                       b = _snap100(b);
 
-                      // clamp posle snapa (za svaki slučaj)
+                      
                       a = a.clamp(sliderMin, sliderMax);
                       b = b.clamp(sliderMin, sliderMax);
 
-                      // swap ako treba
+                      
                       if (a > b) {
                         final t = a;
                         a = b;
@@ -132,7 +132,7 @@ class FilterButtonWidget extends StatelessWidget {
 
                   const SizedBox(height: 10),
 
-                  // Features
+                  
                   const _SectionTitle('Features'),
                   const SizedBox(height: 6),
                   SwitchListTile(
@@ -170,7 +170,7 @@ class FilterButtonWidget extends StatelessWidget {
 
                   const SizedBox(height: 8),
 
-                  // Actions
+                  
                   Row(
                     children: [
                       Expanded(

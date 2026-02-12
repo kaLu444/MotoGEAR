@@ -1,4 +1,4 @@
-// lib/main.dart
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:motogear/seeder.dart';
@@ -31,9 +31,7 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
 
-  /*if (kDebugMode) {
-    await DevSeeder.seedProductsOnce();
-  }*/
+ 
 
   runApp(
     MultiProvider(
@@ -41,12 +39,12 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
 
-        // ✅ Auth mora pre ProxyProvider-a
+        
         ChangeNotifierProvider(
           create: (_) => AuthProvider(AuthService())..loadSession(),
         ),
 
-        // ✅ Products se učitavaju iz Firestore
+        
         ChangeNotifierProvider(
           create: (_) => ProductsProvider(ProductsService())..loadProducts(),
         ),

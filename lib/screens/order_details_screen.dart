@@ -1,4 +1,4 @@
-// lib/screens/order_details_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -171,7 +171,7 @@ class OrderDetailsScreen extends StatelessWidget {
   }
 }
 
-// --- ostalo isto ---
+
 class _SectionTitle extends StatelessWidget {
   final String text;
   const _SectionTitle(this.text);

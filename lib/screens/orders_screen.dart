@@ -11,7 +11,7 @@ class OrdersScreen extends StatelessWidget {
   const OrdersScreen({super.key});
 
   String _fmtDate(DateTime d) {
-    // bez intl: dd.MM.yyyy
+    
     final dd = d.day.toString().padLeft(2, '0');
     final mm = d.month.toString().padLeft(2, '0');
     final yy = d.year.toString();

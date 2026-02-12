@@ -1,5 +1,6 @@
-// lib/services/orders_service.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../models/cart_item.dart';
 import '../models/shipping_address.dart';
 
@@ -19,9 +20,10 @@ class OrdersService {
     if (items.isEmpty) throw StateError('CART_EMPTY');
     if (!shipping.isValid) throw StateError('INVALID_ADDRESS');
 
-    final ref = _ordersCol(uid).doc(); // auto id
+    final ref = _ordersCol(uid).doc(); 
 
     await ref.set({
+      'uid': uid, 
       'status': 'placed',
       'total': total,
       'shipping': shipping.toMap(),
@@ -47,7 +49,6 @@ class OrdersService {
       final data = snap.data() as Map<String, dynamic>;
       final status = (data['status'] as String?) ?? 'placed';
 
-      // dozvoli otkaz samo dok NIJE shipped/delivered (tj. nije u toku isporuka ili isporučeno)
       const canCancel = {'placed', 'paid'};
       if (!canCancel.contains(status)) {
         throw StateError('CANNOT_CANCEL_STATUS:$status');

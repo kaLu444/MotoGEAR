@@ -1,7 +1,8 @@
-// ignore_for_file: deprecated_member_use
+
 
 import 'package:flutter/material.dart';
 import 'package:motogear/screens/address_card_screen.dart';
+import 'package:motogear/screens/admin_dashboard_screen.dart';
 import 'package:motogear/screens/edit_profile_screen.dart';
 import 'package:motogear/screens/orders_screen.dart';
 import 'package:provider/provider.dart';
@@ -75,7 +76,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 name: auth.user!.name,
                 email: auth.user!.email,
                 onEditProfile: () async {
-                  // ✅ prosleđujemo stvarne vrednosti (nema više “Your name” hardkoda)
+                  
                   final msg = await Navigator.of(context).push<String>(
                     MaterialPageRoute(
                       builder: (_) => EditProfileScreen(
@@ -87,7 +88,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   if (!mounted) return;
 
-                  // očisti error da se ne prenosi
+                  
                   context.read<AuthProvider>().clearError();
 
                   if (msg != null && msg.trim().isNotEmpty) {
@@ -97,6 +98,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   }
                 },
               ),
+
+              if (auth.isAdmin) ...[
+                const SizedBox(height: 12),
+                _MenuTile(
+                  icon: Icons.admin_panel_settings_rounded,
+                  label: 'Admin dashboard',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AdminDashboardScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+              ],
+
               const SizedBox(height: 16),
 
               _MenuTile(
@@ -110,7 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
 
-              // ✅ Wishlist sada vodi na WishlistScreen
+              
               _MenuTile(
                 icon: Icons.favorite_border_rounded,
                 label: 'Wishlist',
@@ -122,7 +140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
 
-              // ✅ Addresses više ne vodi na wishlist (placeholder)
+              
               _MenuTile(
                 icon: Icons.credit_card_rounded,
                 label: 'Address & Card',

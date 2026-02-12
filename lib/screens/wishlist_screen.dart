@@ -42,7 +42,7 @@ class WishlistScreen extends StatelessWidget {
       if (p != null) items.add(p);
     }
 
-    // lepši prikaz (po naslovu)
+    
     items.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
 
     return Scaffold(

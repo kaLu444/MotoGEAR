@@ -85,7 +85,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       (w) => w.isWishlisted(product.id),
     );
 
-    // max 2 slike (ako ima 1 -> dupliciraj; ako nema -> [])
+    
     final images = product.images.length >= 2
         ? product.images.take(2).toList()
         : product.images.isEmpty
@@ -205,7 +205,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 price: product.priceLabel,
                 isWishlisted: isWishlisted,
 
-                // ✅ async safe
+                
                 onToggleWishlist: () async {
                   final auth = context.read<AuthProvider>();
                   if (!auth.isLoggedIn) {
@@ -215,7 +215,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   await context.read<WishlistProvider>().toggle(product.id);
                 },
 
-                // ✅ async safe (za slučaj da updateItemSize bude Future u provideru)
+                
                 onAddToCart: () async {
                   final sizesNow = _sizes;
                   final safeIndex = _selectedSizeIndex.clamp(
@@ -272,7 +272,7 @@ class _TopImageFixed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ ne puca kad nema slika
+    
     final idx = images.isEmpty ? 0 : pageIndex.clamp(0, images.length - 1);
 
     return SizedBox(
@@ -468,7 +468,7 @@ class _SizeChip extends StatelessWidget {
   }
 }
 
-/// ✅ BottomBar sa async callback-ovima
+
 class _BottomBar extends StatelessWidget {
   final String price;
   final bool isWishlisted;

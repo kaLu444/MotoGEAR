@@ -4,7 +4,7 @@ class ShippingAddress {
   final String line1;
   final String city;
   final String postalCode;
-  final String countryCode; // npr. "RS", "US"
+  final String countryCode; 
 
   const ShippingAddress({
     required this.fullName,

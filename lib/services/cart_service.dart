@@ -9,8 +9,8 @@ class CartService {
   CollectionReference<Map<String, dynamic>> _itemsCol(String uid) =>
       _db.collection('carts').doc(uid).collection('items');
 
-  /// Jednokratno učitavanje korpe (za tvoj CartProvider.loadCart()).
-  /// Ako uid nije prosleđen ili je prazan -> vrati prazno (da ne puca na startu).
+  
+  
   Future<List<CartItem>> fetchCart({String? uid}) async {
     if (uid == null || uid.isEmpty) return [];
 
@@ -18,13 +18,13 @@ class CartService {
     return snap.docs.map((d) => CartItem.fromMap(d.id, d.data())).toList();
   }
 
-  /// Real-time stream korpe
+  
   Stream<List<CartItem>> watchCart({String? uid}) {
     if (uid == null || uid.isEmpty) {
       return Stream.value(<CartItem>[]);
     }
 
-    // Ako imaš slučajeve da neki item nema updatedAt, bolje skloni orderBy.
+    
     return _itemsCol(uid)
         .orderBy('updatedAt', descending: true)
         .snapshots()
@@ -104,7 +104,7 @@ class CartService {
     await _itemsCol(uid).doc(cartItemId).delete();
   }
 
-  /// Promena veličine (merge ako postoji isti product+newSize)
+  
   Future<void> changeSize({
     required String uid,
     required Product product,
@@ -143,7 +143,7 @@ class CartService {
     });
   }
 
-  /// Alias ako si u provideru/ekranu zvao updateItemSize(...)
+  
   Future<void> updateItemSize({
     required String uid,
     required Product product,

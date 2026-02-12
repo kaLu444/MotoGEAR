@@ -53,7 +53,7 @@ class CartItem {
   Map<String, dynamic> toMap() {
     return {
       'productId': product.id,
-      'product': product.toMap(), // mora da postoji u Product modelu
+      'product': product.toMap(), 
       'size': size,
       'quantity': quantity,
       'inStock': inStock,

@@ -21,7 +21,7 @@ class CheckoutShippingScreen extends StatefulWidget {
 }
 
 class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
-  // ===== Address =====
+  
   bool _editingAddress = false;
 
   late final TextEditingController _name;
@@ -31,12 +31,12 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
   late final TextEditingController _postal;
   String _country = 'RS';
 
-  // ===== Card =====
+  
   bool _editingCard = false;
 
   late final TextEditingController _holder;
   String _brand = 'Visa';
-  late final TextEditingController _number; // ceo broj kartice
+  late final TextEditingController _number; 
   int _expMonth = 1;
   int _expYear = 2026;
 
@@ -67,7 +67,7 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
     super.dispose();
   }
 
-  // ---------------- Address helpers ----------------
+  
   void _fillAddressFrom(ShippingAddress a) {
     _name.text = a.fullName;
     _phone.text = a.phone;
@@ -88,11 +88,11 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
     );
   }
 
-  // ---------------- Card helpers ----------------
+  
   void _fillCardFrom(PaymentCard c) {
     _holder.text = c.holderName;
     _brand = c.brand.isEmpty ? 'Visa' : c.brand;
-    _number.text = c.number; // ceo broj
+    _number.text = c.number; 
     _expMonth = c.expMonth;
     _expYear = c.expYear;
   }
@@ -144,7 +144,7 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
       );
     }
 
-    // ===== Address state =====
+    
     final a = addrProv.address;
 
     if (a != null && !_editingAddress && _name.text.isEmpty) {
@@ -153,7 +153,7 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
 
     final hasAddress = a != null && a.isValid;
 
-    // ===== Card state =====
+    
     final c = payProv.card;
 
     if (c != null && !_editingCard && _holder.text.isEmpty) {
@@ -177,7 +177,7 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 18),
           children: [
-            // ================= Shipping Address =================
+            
             const Text(
               'Shipping Address',
               style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900),
@@ -245,7 +245,7 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
 
             const SizedBox(height: 22),
 
-            // ================= Credit Card =================
+            
             const Text(
               'Credit Card',
               style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900),
@@ -314,7 +314,7 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
 
             const SizedBox(height: 18),
 
-            // ================= Summary =================
+            
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -341,7 +341,7 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
 
             const SizedBox(height: 16),
 
-            // ================= Continue =================
+            
             SizedBox(
               height: 54,
               child: ElevatedButton(
@@ -353,20 +353,20 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
                 onPressed: (addrProv.loading || payProv.loading)
                     ? null
                     : () async {
-                        // 0) korpa prazna
+                        
                         if (cart.items.isEmpty) {
                           _toast('Korpa je prazna.');
                           return;
                         }
 
-                        // 1) Address: ako nema validnu adresu ili je u edit modu -> pokušaj save iz forme
+                        
                         if (!(hasAddress && !_editingAddress)) {
                           final newAddr = _buildAddress();
                           await context.read<AddressProvider>().save(newAddr);
                           if (!mounted) return;
 
                           final okAddr =
-                              // ignore: use_build_context_synchronously
+                              
                               context.read<AddressProvider>().address?.isValid == true;
                           if (!okAddr) {
                             _toast('Popuni adresu da nastaviš.');
@@ -375,14 +375,14 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
                           setState(() => _editingAddress = false);
                         }
 
-                        // 2) Card: ako nema validnu karticu ili je u edit modu -> pokušaj save iz forme
+                        
                         if (!(hasCard && !_editingCard)) {
                           final newCard = _buildCard();
-                          // ignore: use_build_context_synchronously
+                          
                           await context.read<PaymentProvider>().save(newCard);
                           if (!mounted) return;
 
-                          // ignore: use_build_context_synchronously
+                          
                           final okCard = context.read<PaymentProvider>().card?.isValid == true;
                           if (!okCard) {
                             _toast('Popuni karticu da nastaviš.');
@@ -391,7 +391,7 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
                           setState(() => _editingCard = false);
                         }
 
-                        // 3) place order + clear cart
+                        
                         final uid = auth.user!.id;
                         final shipping = context.read<AddressProvider>().address;
 
@@ -414,7 +414,7 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
                           _toast('Order placed ✅');
 
                           Navigator.popUntil(context, (r) => r.isFirst);
-                          context.read<NavigationProvider>().setIndex(3); // profile
+                          context.read<NavigationProvider>().setIndex(3); 
                         } catch (e) {
                           _toast('Greška: $e');
                         }
@@ -432,7 +432,7 @@ class _CheckoutShippingScreenState extends State<CheckoutShippingScreen> {
   }
 }
 
-// ===================== Address widgets (isti kao tvoji) =====================
+
 
 class _AddressCard extends StatelessWidget {
   final ShippingAddress address;
@@ -579,7 +579,7 @@ class _AddressForm extends StatelessWidget {
   }
 }
 
-// ===================== Card widgets =====================
+
 
 class _CardPreview extends StatelessWidget {
   final PaymentCard card;
@@ -609,7 +609,7 @@ class _CardPreview extends StatelessWidget {
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 6),
                 Text(
-                  '${card.brand}  ${card.number}', // ceo broj
+                  '${card.brand}  ${card.number}', 
                   style: const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 10),
@@ -724,7 +724,7 @@ class _CardForm extends StatelessWidget {
 
         const SizedBox(height: 12),
 
-        // ceo broj, 13-19 cifara (kao tvoj isValid)
+        
         field('Card number', number, type: TextInputType.number, maxLen: 19),
 
         const SizedBox(height: 12),
@@ -801,7 +801,7 @@ class _CardForm extends StatelessWidget {
   }
 }
 
-// ===================== Shared widgets =====================
+
 
 class _RowKV extends StatelessWidget {
   final String label;

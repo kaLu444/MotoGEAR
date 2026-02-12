@@ -15,6 +15,14 @@ class HomeScreen extends StatelessWidget {
     final primary = Theme.of(context).colorScheme.primary;
     final cartCount = context.watch<CartProvider>().cartCount;
 
+    void goToCart() {
+      context.read<NavigationProvider>().setIndex(2);
+    }
+
+    void goToCategories() {
+      context.read<NavigationProvider>().setIndex(1);
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -25,11 +33,10 @@ class HomeScreen extends StatelessWidget {
               primary: primary,
               logoAsset: AssetsManager.alpinestarsLogo,
               heroAsset: AssetsManager.homeHero,
-              cartCount: cartCount, 
-              onShopNow: () {},
-              onCart: () {
-                context.read<NavigationProvider>().setIndex(2); 
-              },
+              cartCount: cartCount,
+              
+              onShopNow: goToCart,
+              onCart: goToCart,
             ),
 
             Container(
@@ -63,21 +70,25 @@ class HomeScreen extends StatelessWidget {
             Container(
               color: const Color(0xFF0F0F10),
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _QuickCategoryItem(
                     icon: Icons.shield_outlined,
                     label: 'Tech-Air',
                     isActive: true,
+                    
+                    onTap: goToCategories,
                   ),
                   _QuickCategoryItem(
                     icon: Icons.flag_outlined,
                     label: 'Racing',
+                    onTap: goToCategories,
                   ),
                   _QuickCategoryItem(
                     icon: Icons.sports_motorsports_outlined,
                     label: 'Helmets',
+                    onTap: goToCategories,
                   ),
                 ],
               ),
@@ -99,7 +110,8 @@ class HomeScreen extends StatelessWidget {
                       titleTop: 'NEW GEAR',
                       imageAsset: AssetsManager.tileNewGear,
                       ctaText: 'DISCOVER',
-                      onTap: () {},
+                      
+                      onTap: goToCategories,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -108,7 +120,8 @@ class HomeScreen extends StatelessWidget {
                       titleTop: 'RIDING BOOTS',
                       imageAsset: AssetsManager.tileBoots,
                       ctaText: 'SHOP NOW',
-                      onTap: () {},
+                      
+                      onTap: goToCart,
                     ),
                   ),
                 ],
@@ -306,11 +319,13 @@ class _QuickCategoryItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isActive;
+  final VoidCallback? onTap;
 
   const _QuickCategoryItem({
     required this.icon,
     required this.label,
     this.isActive = false,
+    this.onTap,
   });
 
   @override
@@ -318,34 +333,38 @@ class _QuickCategoryItem extends StatelessWidget {
     final primary = Theme.of(context).colorScheme.primary;
 
     return Expanded(
-      child: Column(
-        children: [
-          Container(
-            height: 46,
-            width: 46,
-            decoration: BoxDecoration(
-              color: isActive
-                  ? primary.withOpacity(0.15)
-                  : const Color(0xFF17171A),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Column(
+          children: [
+            Container(
+              height: 46,
+              width: 46,
+              decoration: BoxDecoration(
                 color: isActive
-                    ? primary.withOpacity(0.55)
-                    : const Color(0x22FFFFFF),
+                    ? primary.withOpacity(0.15)
+                    : const Color(0xFF17171A),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isActive
+                      ? primary.withOpacity(0.55)
+                      : const Color(0x22FFFFFF),
+                ),
+              ),
+              child: Icon(icon, color: isActive ? primary : Colors.white),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? Colors.white : AppColors.textMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            child: Icon(icon, color: isActive ? primary : Colors.white),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              color: isActive ? Colors.white : AppColors.textMuted,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class WishlistService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // /wishlists/{uid}/items/{productId}
+  
   CollectionReference<Map<String, dynamic>> _col(String uid) =>
       _db.collection('wishlists').doc(uid).collection('items');
 

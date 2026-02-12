@@ -45,7 +45,7 @@ class WishlistProvider extends ChangeNotifier {
 
     final was = _ids.contains(productId);
 
-    // optimistic update
+    
     final next = {..._ids};
     if (was) {
       next.remove(productId);
@@ -62,7 +62,7 @@ class WishlistProvider extends ChangeNotifier {
         await _service.add(uid: uid, productId: productId);
       }
     } catch (e) {
-      // rollback
+      
       final rollback = {..._ids};
       if (was) {
         rollback.add(productId);

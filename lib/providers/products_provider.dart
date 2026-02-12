@@ -15,11 +15,11 @@ class ProductsProvider extends ChangeNotifier {
 
   SortOption _sort = SortOption.featured;
 
-  // ✅ default range (računa se iz podataka)
+  
   double _defaultMinPrice = 0;
   double _defaultMaxPrice = 0;
 
-  // ✅ trenutni filteri
+  
   double _minPrice = 0;
   double _maxPrice = 0;
 
@@ -37,13 +37,13 @@ class ProductsProvider extends ChangeNotifier {
   double get minPrice => _minPrice;
   double get maxPrice => _maxPrice;
 
-  // ako ti treba za UI (slider max)
+  
   double get defaultMaxPrice => _defaultMaxPrice;
 
   bool get techAirReady => _techAirReady;
   bool get waterproof => _waterproof;
 
-  // ✅ za wishlist (nefiltrirano)
+  
   List<Product> get allProducts => List.unmodifiable(_all);
 
   Product? getById(String id) {
@@ -71,19 +71,19 @@ class ProductsProvider extends ChangeNotifier {
     try {
       _all = await _service.fetchProducts();
 
-      // ✅ izračunaj default max iz podataka
+      
       final maxFromDb = _all.isEmpty
           ? 0.0
           : _all.map((p) => p.priceValue).reduce((a, b) => a > b ? a : b);
 
-      // za lep slider: zaokruži naviše na 50
+      
       double roundUp(double v, double step) =>
           v <= 0 ? 0 : (step * ((v / step).ceil())).toDouble();
 
       _defaultMinPrice = 0;
       _defaultMaxPrice = roundUp(maxFromDb, 50);
 
-      // ✅ resetuj filter range na default
+      
       _minPrice = _defaultMinPrice;
       _maxPrice = _defaultMaxPrice;
     } catch (e) {

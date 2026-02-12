@@ -11,7 +11,7 @@ class Product {
   final bool techAirReady;
   final bool waterproof;
 
-  // da izbaciš hardkod u details
+  
   final List<String> bullets;
   final List<String> sizes;
 
@@ -43,7 +43,9 @@ class Product {
       techAirReady: (data['techAirReady'] as bool?) ?? false,
       waterproof: (data['waterproof'] as bool?) ?? false,
       bullets: List<String>.from((data['bullets'] as List?) ?? const []),
-      sizes: List<String>.from((data['sizes'] as List?) ?? const ['S', 'M', 'L', 'XL', 'XXL']),
+      sizes: List<String>.from(
+        (data['sizes'] as List?) ?? const ['S', 'M', 'L', 'XL', 'XXL'],
+      ),
     );
   }
 
@@ -62,5 +64,35 @@ class Product {
       'bullets': bullets,
       'sizes': sizes,
     };
+  }
+
+  
+  Product copyWith({
+    String? category,
+    String? title,
+    String? subtitle,
+    String? priceLabel,
+    double? priceValue,
+    List<String>? images,
+    String? coverImage,
+    bool? techAirReady,
+    bool? waterproof,
+    List<String>? bullets,
+    List<String>? sizes,
+  }) {
+    return Product(
+      id: id,
+      category: category ?? this.category,
+      title: title ?? this.title,
+      subtitle: subtitle ?? this.subtitle,
+      priceLabel: priceLabel ?? this.priceLabel,
+      priceValue: priceValue ?? this.priceValue,
+      images: images ?? this.images,
+      coverImage: coverImage ?? this.coverImage,
+      techAirReady: techAirReady ?? this.techAirReady,
+      waterproof: waterproof ?? this.waterproof,
+      bullets: bullets ?? this.bullets,
+      sizes: sizes ?? this.sizes,
+    );
   }
 }

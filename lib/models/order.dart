@@ -9,7 +9,7 @@ class Order {
   final List<CartItem> items;
   final double total;
   final ShippingAddress shipping;
-  final String status; // "placed"
+  final String status; 
   final DateTime createdAt;
 
   const Order({
@@ -38,9 +38,9 @@ class Order {
     final items = itemsRaw
         .whereType<Map>()
         .map((m) => CartItem.fromMap(
-              // u order itemu nema svoj doc id, pa daj neki stabilan fallback
+              
               '${id}_${(m['productId'] ?? m['product']?['id'] ?? '')}_${(m['size'] ?? '')}',
-              Map<String, dynamic>.from(m as Map),
+              Map<String, dynamic>.from(m),
             ))
         .toList();
 

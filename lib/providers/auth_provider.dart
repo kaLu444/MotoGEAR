@@ -9,6 +9,7 @@ class AuthProvider extends ChangeNotifier {
   String? _error;
   AuthUser? _user;
 
+  bool get isAdmin => _user?.isAdmin ?? false;
   bool get loading => _loading;
   String? get error => _error;
 
@@ -42,10 +43,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> login({required String email, required String password}) async {
     _loading = true;
     _error = null;
     notifyListeners();
